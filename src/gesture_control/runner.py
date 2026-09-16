@@ -30,6 +30,10 @@ def run(
     drawing_path: str | Path = "recordings/drawing.png",
     max_frames: int | None = None,
     headless: bool = False,
+    camera_width: int = 640,
+    camera_height: int = 480,
+    latest_frame: bool = True,
+    diagnostics: bool = True,
 ) -> int:
     """Process a camera stream once; return frame count. Errors propagate after cleanup.
 
@@ -58,11 +62,18 @@ def run(
             drawing_path=drawing_path,
         )
         resources.callback(_cleanup, "UI", ui.close)
+        ui.diagnostics = diagnostics
         detector = MediaPipeHandDetector(
             model_path, min_detection_confidence=config.camera.min_detection_confidence
         )
         resources.callback(_cleanup, "detector", detector.close)
-        camera = OpenCVCamera(index=config.camera.index, fps=config.camera.target_fps)
+        camera = OpenCVCamera(
+            index=config.camera.index,
+            fps=config.camera.target_fps,
+            width=camera_width,
+            height=camera_height,
+            latest_frame=latest_frame,
+        )
         resources.callback(_cleanup, "camera", camera.close)
         temporal = GestureTemporalProcessor(config.temporal, config.recognition, config.smoothing)
         resources.callback(_cleanup, "temporal state", temporal.reset)
@@ -99,6 +110,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--calibration", type=Path, default=Path("recordings/calibration.json"))
     parser.add_argument("--drawing", type=Path, default=Path("recordings/drawing.png"))
     parser.add_argument("--max-frames", type=int, help="Exit after N frames (hardware smoke check)")
+    parser.add_argument("--camera-width", type=int, default=640)
+    parser.add_argument("--camera-height", type=int, default=480)
+    parser.add_argument(
+        "--synchronous-camera", action="store_true", help="Disable latest-frame capture"
+    )
+    parser.add_argument(
+        "--no-diagnostics", action="store_true", help="Start with landmark overlays off"
+    )
     parser.add_argument(
         "--headless", action="store_true", help="Render without windows; needs frame limit"
     )
@@ -119,6 +138,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             drawing_path=args.drawing,
             max_frames=args.max_frames,
             headless=args.headless,
+            camera_width=args.camera_width,
+            camera_height=args.camera_height,
+            latest_frame=not args.synchronous_camera,
+            diagnostics=not args.no_diagnostics,
         )
     except KeyboardInterrupt:
         LOGGER.info("Interrupted; resources closed")

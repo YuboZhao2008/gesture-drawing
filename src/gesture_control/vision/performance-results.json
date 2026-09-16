@@ -1,0 +1,679 @@
+{
+  "baseline_commit": "2c51c0c",
+  "platform": "Windows Python 3.12.10, OpenCV 4.14.0, MediaPipe 0.10.35; CPU XNNPACK; camera 0",
+  "scene": "No hand observed; no accuracy or hand-tracking speed claim",
+  "comparison": [
+    {
+      "python": "3.12.10",
+      "opencv": "4.14.0",
+      "mediapipe": "0.10.35",
+      "requested": {
+        "width": 640,
+        "height": 480,
+        "fps": 30
+      },
+      "camera": {
+        "backend": "MSMF",
+        "width": 640.0,
+        "height": 480.0,
+        "fps": 30.0,
+        "buffer_size_readback": 1.0,
+        "latest_frame": false
+      },
+      "actual_image_size": [
+        640,
+        480
+      ],
+      "frames": 240,
+      "warmup": 30,
+      "hand_frames": 0,
+      "draw": false,
+      "processing_delay_ms": 0,
+      "capture_fps": 30.063860525131737,
+      "detector_fps": 30.063860525131737,
+      "detector_capacity_fps": 92.37965961532308,
+      "capture_wait_ms": {
+        "mean": 22.432510833884105,
+        "p50": 3.9491499919677153,
+        "p95": 55.31543000179226,
+        "max": 70.46540000010282
+      },
+      "detector_latency_ms": {
+        "mean": 10.82489375003206,
+        "p50": 10.56984999740962,
+        "p95": 13.474109987873815,
+        "max": 18.265799997607246
+      },
+      "vision_frame_ms": {
+        "mean": 33.25740458391616,
+        "p50": 16.3224500065553,
+        "p95": 66.35673999990102,
+        "max": 80.78400000522379
+      },
+      "acquisition_to_result_ms": {
+        "mean": 10.86666666645518,
+        "p50": 14.999999999417923,
+        "p95": 16.00000000325963,
+        "max": 16.00000000325963
+      },
+      "drawing_ms": {
+        "mean": 0.0026562493076198734,
+        "p50": 0.0024000037228688598,
+        "p95": 0.004410004476085302,
+        "max": 0.009800001862458885
+      },
+      "loop_ms": {
+        "mean": 33.260476250325155,
+        "p50": 16.325550008332357,
+        "p95": 66.36151999409775,
+        "max": 80.78640000894666
+      },
+      "latency_scope": "Host read completion to result; sensor/driver latency is unmeasured",
+      "label": "before"
+    },
+    {
+      "python": "3.12.10",
+      "opencv": "4.14.0",
+      "mediapipe": "0.10.35",
+      "requested": {
+        "width": 640,
+        "height": 480,
+        "fps": 30
+      },
+      "camera": {
+        "backend": "MSMF",
+        "width": 640.0,
+        "height": 480.0,
+        "fps": 30.0,
+        "buffer_size_accepted": false,
+        "buffer_size_readback": 1.0,
+        "latest_frame": true
+      },
+      "actual_image_size": [
+        640,
+        480
+      ],
+      "frames": 240,
+      "warmup": 30,
+      "hand_frames": 0,
+      "draw": false,
+      "processing_delay_ms": 0,
+      "capture_fps": 30.06028052466546,
+      "detector_fps": 28.628838594919483,
+      "detector_capacity_fps": 89.76056370082561,
+      "capture_wait_ms": {
+        "mean": 23.78494625008898,
+        "p50": 36.05175000120653,
+        "p95": 58.14336499752243,
+        "max": 69.26790000579786
+      },
+      "detector_latency_ms": {
+        "mean": 11.140749999443264,
+        "p50": 10.648550000041723,
+        "p95": 14.010315004270524,
+        "max": 20.21919999970123
+      },
+      "vision_frame_ms": {
+        "mean": 34.925696249532244,
+        "p50": 47.16090000147233,
+        "p95": 69.61292499763658,
+        "max": 80.14120000007097
+      },
+      "acquisition_to_result_ms": {
+        "mean": 15.359888749905318,
+        "p50": 14.16885000799084,
+        "p95": 23.785999992833236,
+        "max": 28.288000001339242
+      },
+      "drawing_ms": {
+        "mean": 0.0019191671526641585,
+        "p50": 0.001400010660290718,
+        "p95": 0.0039050006307661516,
+        "max": 0.014300007023848593
+      },
+      "loop_ms": {
+        "mean": 34.92790333305796,
+        "p50": 47.164299998257775,
+        "p95": 69.61470999667654,
+        "max": 80.14280001225416
+      },
+      "latency_scope": "Host read completion to result; sensor/driver latency is unmeasured",
+      "label": "after"
+    },
+    {
+      "python": "3.12.10",
+      "opencv": "4.14.0",
+      "mediapipe": "0.10.35",
+      "requested": {
+        "width": 640,
+        "height": 480,
+        "fps": 60
+      },
+      "camera": {
+        "backend": "MSMF",
+        "width": 640.0,
+        "height": 480.0,
+        "fps": 30.0,
+        "buffer_size_readback": 1.0,
+        "latest_frame": false
+      },
+      "actual_image_size": [
+        640,
+        480
+      ],
+      "frames": 240,
+      "warmup": 30,
+      "hand_frames": 0,
+      "draw": false,
+      "processing_delay_ms": 0,
+      "capture_fps": 30.071129497975914,
+      "detector_fps": 30.071129497975914,
+      "detector_capacity_fps": 88.78284928802414,
+      "capture_wait_ms": {
+        "mean": 21.98587041760523,
+        "p50": 4.16889999905834,
+        "p95": 55.11867499226354,
+        "max": 67.30969999625813
+      },
+      "detector_latency_ms": {
+        "mean": 11.263436666195048,
+        "p50": 10.93675000447547,
+        "p95": 13.92798001252231,
+        "max": 20.119599997997284
+      },
+      "vision_frame_ms": {
+        "mean": 33.24930708380028,
+        "p50": 18.255749993841164,
+        "p95": 66.54583499912404,
+        "max": 80.91540000168607
+      },
+      "acquisition_to_result_ms": {
+        "mean": 11.33750000008149,
+        "p50": 14.999999999417923,
+        "p95": 16.00000000325963,
+        "max": 32.00000000651926
+      },
+      "drawing_ms": {
+        "mean": 0.0028574998699089824,
+        "p50": 0.0024999899324029684,
+        "p95": 0.0045000051613897085,
+        "max": 0.007299997378140688
+      },
+      "loop_ms": {
+        "mean": 33.252548333863764,
+        "p50": 18.25884999561822,
+        "p95": 66.5488200058462,
+        "max": 80.91829999466427
+      },
+      "latency_scope": "Host read completion to result; sensor/driver latency is unmeasured",
+      "label": "before"
+    },
+    {
+      "python": "3.12.10",
+      "opencv": "4.14.0",
+      "mediapipe": "0.10.35",
+      "requested": {
+        "width": 640,
+        "height": 480,
+        "fps": 60
+      },
+      "camera": {
+        "backend": "MSMF",
+        "width": 640.0,
+        "height": 480.0,
+        "fps": 30.0,
+        "buffer_size_accepted": false,
+        "buffer_size_readback": 1.0,
+        "latest_frame": true
+      },
+      "actual_image_size": [
+        640,
+        480
+      ],
+      "frames": 240,
+      "warmup": 30,
+      "hand_frames": 0,
+      "draw": false,
+      "processing_delay_ms": 0,
+      "capture_fps": 30.05804853272153,
+      "detector_fps": 28.626712888306216,
+      "detector_capacity_fps": 91.24743224339309,
+      "capture_wait_ms": {
+        "mean": 23.969250833397382,
+        "p50": 36.938450000889134,
+        "p95": 57.69629500136943,
+        "max": 70.58309999410994
+      },
+      "detector_latency_ms": {
+        "mean": 10.959212499619753,
+        "p50": 10.502899996936321,
+        "p95": 14.681749999726884,
+        "max": 18.30060000065714
+      },
+      "vision_frame_ms": {
+        "mean": 34.928463333017135,
+        "p50": 49.23495000548428,
+        "p95": 69.48548500440666,
+        "max": 85.6292999960715
+      },
+      "acquisition_to_result_ms": {
+        "mean": 15.118907499769799,
+        "p50": 15.07244999811519,
+        "p95": 22.61668999781249,
+        "max": 27.22889999859035
+      },
+      "drawing_ms": {
+        "mean": 0.0018045834319006342,
+        "p50": 0.001400010660290718,
+        "p95": 0.0034999982744921,
+        "max": 0.004799992893822491
+      },
+      "loop_ms": {
+        "mean": 34.93055166660876,
+        "p50": 49.23650000273483,
+        "p95": 69.48721000226215,
+        "max": 85.63109999522567
+      },
+      "latency_scope": "Host read completion to result; sensor/driver latency is unmeasured",
+      "label": "after"
+    },
+    {
+      "python": "3.12.10",
+      "opencv": "4.14.0",
+      "mediapipe": "0.10.35",
+      "requested": {
+        "width": 960,
+        "height": 540,
+        "fps": 60
+      },
+      "camera": {
+        "backend": "MSMF",
+        "width": 800.0,
+        "height": 600.0,
+        "fps": 30.0,
+        "buffer_size_readback": 1.0,
+        "latest_frame": false
+      },
+      "actual_image_size": [
+        800,
+        600
+      ],
+      "frames": 240,
+      "warmup": 30,
+      "hand_frames": 0,
+      "draw": false,
+      "processing_delay_ms": 0,
+      "capture_fps": 30.052343669595295,
+      "detector_fps": 30.052343669595295,
+      "detector_capacity_fps": 82.19984316433094,
+      "capture_wait_ms": {
+        "mean": 21.1045541665347,
+        "p50": 4.243600000336301,
+        "p95": 53.59643000047072,
+        "max": 70.13890000234824
+      },
+      "detector_latency_ms": {
+        "mean": 12.165473333091844,
+        "p50": 11.410649996832944,
+        "p95": 17.021654986456266,
+        "max": 23.10429999488406
+      },
+      "vision_frame_ms": {
+        "mean": 33.27002749962654,
+        "p50": 22.42495000245981,
+        "p95": 66.54392999917036,
+        "max": 81.01529999112245
+      },
+      "acquisition_to_result_ms": {
+        "mean": 13.016666666711293,
+        "p50": 15.999999988707714,
+        "p95": 16.00000000325963,
+        "max": 32.00000000651926
+      },
+      "drawing_ms": {
+        "mean": 0.0029408337165174694,
+        "p50": 0.0026000052457675338,
+        "p95": 0.0043999905756209046,
+        "max": 0.011799987987615168
+      },
+      "loop_ms": {
+        "mean": 33.27326374971259,
+        "p50": 22.42755000042962,
+        "p95": 66.54739999721642,
+        "max": 81.01799999712966
+      },
+      "latency_scope": "Host read completion to result; sensor/driver latency is unmeasured",
+      "label": "before"
+    },
+    {
+      "python": "3.12.10",
+      "opencv": "4.14.0",
+      "mediapipe": "0.10.35",
+      "requested": {
+        "width": 960,
+        "height": 540,
+        "fps": 60
+      },
+      "camera": {
+        "backend": "MSMF",
+        "width": 800.0,
+        "height": 600.0,
+        "fps": 30.0,
+        "buffer_size_accepted": false,
+        "buffer_size_readback": 1.0,
+        "latest_frame": true
+      },
+      "actual_image_size": [
+        800,
+        600
+      ],
+      "frames": 240,
+      "warmup": 30,
+      "hand_frames": 0,
+      "draw": false,
+      "processing_delay_ms": 0,
+      "capture_fps": 30.056641024347947,
+      "detector_fps": 28.6253724041409,
+      "detector_capacity_fps": 79.94420427208064,
+      "capture_wait_ms": {
+        "mean": 22.421126666631608,
+        "p50": 32.01404999708757,
+        "p95": 54.72541999770328,
+        "max": 67.5104999972973
+      },
+      "detector_latency_ms": {
+        "mean": 12.508724167128094,
+        "p50": 11.770199998863973,
+        "p95": 16.953485007979904,
+        "max": 23.50769999611657
+      },
+      "vision_frame_ms": {
+        "mean": 34.9298508337597,
+        "p50": 43.31475000071805,
+        "p95": 68.19732000221846,
+        "max": 79.0776000067126
+      },
+      "acquisition_to_result_ms": {
+        "mean": 17.622170833298394,
+        "p50": 16.950849996646866,
+        "p95": 27.438859992253125,
+        "max": 38.69860000850167
+      },
+      "drawing_ms": {
+        "mean": 0.002031665705241418,
+        "p50": 0.0015999976312741637,
+        "p95": 0.0036049983464181406,
+        "max": 0.019099999917671084
+      },
+      "loop_ms": {
+        "mean": 34.932184166912826,
+        "p50": 43.31804999674205,
+        "p95": 68.19922500144456,
+        "max": 79.07980000891257
+      },
+      "latency_scope": "Host read completion to result; sensor/driver latency is unmeasured",
+      "label": "after"
+    },
+    {
+      "python": "3.12.10",
+      "opencv": "4.14.0",
+      "mediapipe": "0.10.35",
+      "requested": {
+        "width": 1280,
+        "height": 720,
+        "fps": 60
+      },
+      "camera": {
+        "backend": "MSMF",
+        "width": 1280.0,
+        "height": 720.0,
+        "fps": 30.0,
+        "buffer_size_readback": 1.0,
+        "latest_frame": false
+      },
+      "actual_image_size": [
+        1280,
+        720
+      ],
+      "frames": 240,
+      "warmup": 30,
+      "hand_frames": 0,
+      "draw": false,
+      "processing_delay_ms": 0,
+      "capture_fps": 30.0593984986561,
+      "detector_fps": 30.0593984986561,
+      "detector_capacity_fps": 78.51325725645681,
+      "capture_wait_ms": {
+        "mean": 20.525289582898647,
+        "p50": 4.760650001117028,
+        "p95": 52.24700499966274,
+        "max": 69.72989998757839
+      },
+      "detector_latency_ms": {
+        "mean": 12.736702500236182,
+        "p50": 12.36475000041537,
+        "p95": 15.775235006731235,
+        "max": 19.83520000067074
+      },
+      "vision_frame_ms": {
+        "mean": 33.26199208313483,
+        "p50": 21.553999991738237,
+        "p95": 65.39199500766699,
+        "max": 81.00619999459013
+      },
+      "acquisition_to_result_ms": {
+        "mean": 13.470833333425011,
+        "p50": 15.999999988707714,
+        "p95": 16.00000000325963,
+        "max": 31.000000002677552
+      },
+      "drawing_ms": {
+        "mean": 0.0031558334740111604,
+        "p50": 0.002700006007216871,
+        "p95": 0.005104995943838729,
+        "max": 0.014299992471933365
+      },
+      "loop_ms": {
+        "mean": 33.265457916725914,
+        "p50": 21.55684999888763,
+        "p95": 65.39475999961724,
+        "max": 81.00889998604544
+      },
+      "latency_scope": "Host read completion to result; sensor/driver latency is unmeasured",
+      "label": "before"
+    },
+    {
+      "python": "3.12.10",
+      "opencv": "4.14.0",
+      "mediapipe": "0.10.35",
+      "requested": {
+        "width": 1280,
+        "height": 720,
+        "fps": 60
+      },
+      "camera": {
+        "backend": "MSMF",
+        "width": 1280.0,
+        "height": 720.0,
+        "fps": 30.0,
+        "buffer_size_accepted": false,
+        "buffer_size_readback": 1.0,
+        "latest_frame": true
+      },
+      "actual_image_size": [
+        1280,
+        720
+      ],
+      "frames": 240,
+      "warmup": 30,
+      "hand_frames": 0,
+      "draw": false,
+      "processing_delay_ms": 0,
+      "capture_fps": 30.03304743580307,
+      "detector_fps": 28.602902319812447,
+      "detector_capacity_fps": 75.98066343008982,
+      "capture_wait_ms": {
+        "mean": 21.796022916957252,
+        "p50": 28.27850000176113,
+        "p95": 55.564439996669535,
+        "max": 68.08319999254309
+      },
+      "detector_latency_ms": {
+        "mean": 13.161243332918579,
+        "p50": 12.383050001517404,
+        "p95": 17.717285000253465,
+        "max": 25.89079999597743
+      },
+      "vision_frame_ms": {
+        "mean": 34.95726624987583,
+        "p50": 41.71525000128895,
+        "p95": 70.9234249909059,
+        "max": 84.52979999128729
+      },
+      "acquisition_to_result_ms": {
+        "mean": 18.51740874941849,
+        "p50": 17.66200000565732,
+        "p95": 28.701094996358727,
+        "max": 34.60400000039954
+      },
+      "drawing_ms": {
+        "mean": 0.002088333530991804,
+        "p50": 0.0015999976312741637,
+        "p95": 0.0039000005926936865,
+        "max": 0.015500001609325409
+      },
+      "loop_ms": {
+        "mean": 34.95965541642363,
+        "p50": 41.7172000015853,
+        "p95": 70.92650499980662,
+        "max": 84.53219999501016
+      },
+      "latency_scope": "Host read completion to result; sensor/driver latency is unmeasured",
+      "label": "after"
+    },
+    {
+      "label": "before",
+      "integrated": true,
+      "frames": 240,
+      "hand_frames": 0,
+      "fps": 30.095135382019027,
+      "capture_wait_ms": {
+        "mean": 14.1675050002353,
+        "p50": 3.5861499927705154,
+        "p95": 41.11173000346753,
+        "max": 61.605800001416355
+      },
+      "detector_latency_ms": {
+        "mean": 11.643864165974568,
+        "p50": 11.45159999578027,
+        "p95": 14.357199990627123,
+        "max": 16.47979998961091
+      },
+      "render_ms": {
+        "mean": 7.3106404171994654,
+        "p50": 7.107500008714851,
+        "p95": 8.72918500608648,
+        "max": 11.36019999103155
+      }
+    },
+    {
+      "label": "after",
+      "integrated": true,
+      "frames": 240,
+      "hand_frames": 0,
+      "fps": 28.683477584839302,
+      "capture_wait_ms": {
+        "mean": 15.73678874962449,
+        "p50": 20.796500000869855,
+        "p95": 44.70098500023596,
+        "max": 61.7911000008462
+      },
+      "detector_latency_ms": {
+        "mean": 11.689857917190238,
+        "p50": 11.536200006958097,
+        "p95": 14.242785004898906,
+        "max": 17.045400003553368
+      },
+      "render_ms": {
+        "mean": 7.33065916653383,
+        "p50": 7.152799997129478,
+        "p95": 8.84622001030948,
+        "max": 11.012799994205125
+      }
+    }
+  ],
+  "freshness_probe": [
+    {
+      "latest_frame": false,
+      "samples": 110,
+      "delayed_samples": 80,
+      "processing_delay_ms": 60,
+      "consecutive_identical_frames": 39,
+      "acquisitions_at_last_read": 110,
+      "warmup_sample_age_proxy": {
+        "mean_ms": 60.11182500198483,
+        "p95_ms": 82.02798999771476,
+        "max_ms": 83.43189999461174
+      },
+      "delayed_sample_age_proxy": {
+        "mean_ms": 97.89730375185609,
+        "p95_ms": 153.4598500020802,
+        "max_ms": 167.3383999913931
+      },
+      "delayed_read_wait": {
+        "mean_ms": 2.4217787497036625,
+        "p95_ms": 3.9552600035676724,
+        "max_ms": 4.510400001890957
+      }
+    },
+    {
+      "latest_frame": true,
+      "samples": 110,
+      "delayed_samples": 80,
+      "processing_delay_ms": 60,
+      "consecutive_identical_frames": 22,
+      "acquisitions_at_last_read": 176,
+      "warmup_sample_age_proxy": {
+        "mean_ms": 58.99793499559164,
+        "p95_ms": 80.26108499467374,
+        "max_ms": 82.75169998407364
+      },
+      "delayed_sample_age_proxy": {
+        "mean_ms": 74.59323499836027,
+        "p95_ms": 104.94875999316574,
+        "max_ms": 113.11450000107288
+      },
+      "delayed_read_wait": {
+        "mean_ms": 0.39996875038923463,
+        "p95_ms": 4.88944999378873,
+        "max_ms": 7.400000002235174
+      }
+    }
+  ],
+  "backend_comparison": [
+    {
+      "backend": "MSMF",
+      "latest_frame": false,
+      "capture_fps": 30.204599310752247,
+      "detector_fps": 30.204599310752247
+    },
+    {
+      "backend": "MSMF",
+      "latest_frame": true,
+      "capture_fps": 29.923463310014665,
+      "detector_fps": 28.958190300014195
+    },
+    {
+      "backend": "DSHOW",
+      "latest_frame": false,
+      "capture_fps": 14.905049320960424,
+      "detector_fps": 14.905049320960424
+    },
+    {
+      "backend": "DSHOW",
+      "latest_frame": true,
+      "capture_fps": 14.90744518858906,
+      "detector_fps": 14.90744518858906
+    }
+  ]
+}

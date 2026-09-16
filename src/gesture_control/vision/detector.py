@@ -73,6 +73,7 @@ class MediaPipeHandDetector:
         self._timestamp_ms = -1
         self._sequence = 0
         self._prefix = uuid4().hex[:12]
+        self._rgb: Any = None
 
     def detect(self, image: object, context: FrameContext) -> HandFrame:
         import cv2
@@ -88,7 +89,14 @@ class MediaPipeHandDetector:
             raise ValueError("frame IDs must increase and timestamps must not decrease")
         # VIDEO requires strictly increasing integer milliseconds, unlike the core.
         timestamp_ms = max(int(context.timestamp_s * 1000), self._timestamp_ms + 1)
-        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        # Reuse the conversion destination at a fixed source size. MediaPipe
+        # owns its immutable image copy; neither the source nor prior results
+        # alias this scratch buffer. Calls remain serialized in VIDEO mode.
+        if self._rgb is None or self._rgb.shape != bgr.shape:
+            import numpy as np
+
+            self._rgb = np.empty(bgr.shape, dtype=np.uint8)
+        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB, dst=self._rgb)
         result = self._backend.detect_for_video(
             self._mp.Image(image_format=self._mp.ImageFormat.SRGB, data=rgb), timestamp_ms
         )
@@ -142,6 +150,7 @@ class MediaPipeHandDetector:
     def close(self) -> None:
         backend, self._backend = self._backend, None
         self._previous = None
+        self._rgb = None
         if backend is not None:
             backend.close()
 

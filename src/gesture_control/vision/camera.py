@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 import time
 from dataclasses import dataclass
+from threading import Condition, Thread
 from types import TracebackType
 from typing import Any
 
@@ -37,7 +38,13 @@ class OpenCVCamera:
     """One stream per open(); resolution/FPS are requests, actual size is in context."""
 
     def __init__(
-        self, index: int = 0, *, width: int = 640, height: int = 480, fps: float = 30.0
+        self,
+        index: int = 0,
+        *,
+        width: int = 640,
+        height: int = 480,
+        fps: float = 30.0,
+        latest_frame: bool = False,
     ) -> None:
         for name, value, minimum in (
             ("index", index, 0),
@@ -48,16 +55,61 @@ class OpenCVCamera:
                 raise ValueError(f"invalid camera {name}")
         if isinstance(fps, bool) or not math.isfinite(fps) or fps <= 0:
             raise ValueError("fps must be finite and positive")
+        if not isinstance(latest_frame, bool):
+            raise ValueError("latest_frame must be boolean")
         self.index, self.width, self.height, self.fps = index, width, height, fps
+        self.latest_frame = latest_frame
         self._capture: Any = None
         self._start = 0.0
         self._frame_id = 0
+        self.settings: dict[str, object] = {}
+        self._condition = Condition()
+        self._worker: Thread | None = None
+        self._latest: CameraFrame | None = None
+        self._error: BaseException | None = None
+        self._cleanup_error: BaseException | None = None
+        self._stopping = False
+        self._ready = False
+
+    @property
+    def captured_frames(self) -> int:
+        """Successful acquisitions, including frames superseded before consumption."""
+        return self._frame_id
+
+    @property
+    def stream_time_s(self) -> float:
+        """Current monotonic time on the FrameContext clock (not exposure time)."""
+        return time.perf_counter() - self._start
 
     def open(self) -> OpenCVCamera:
+        if self._worker is not None or self._capture is not None:
+            return self
+        if not self.latest_frame:
+            self._open_capture()
+            return self
+        self._latest, self._error = None, None
+        self._cleanup_error = None
+        self._stopping = self._ready = False
+        self._worker = Thread(target=self._capture_latest, name="gesture-camera")
+        try:
+            self._worker.start()
+        except BaseException:
+            self._worker = None
+            raise
+        try:
+            with self._condition:
+                self._condition.wait_for(lambda: self._ready)
+                error = self._error
+            if error is not None:
+                raise error
+        except BaseException:
+            self.release()
+            raise
+        return self
+
+    def _open_capture(self) -> None:
         import cv2
 
-        if self._capture is not None:
-            return self
         capture = cv2.VideoCapture(self.index)
         try:
             if not capture.isOpened():
@@ -65,31 +117,114 @@ class OpenCVCamera:
             capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
             capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
             capture.set(cv2.CAP_PROP_FPS, self.fps)
-            self._start = time.monotonic()
+            # Many backends ignore this; never infer support from get() alone.
+            buffer_supported = capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            self.settings = {
+                "backend": capture.getBackendName(),
+                "width": capture.get(cv2.CAP_PROP_FRAME_WIDTH),
+                "height": capture.get(cv2.CAP_PROP_FRAME_HEIGHT),
+                "fps": capture.get(cv2.CAP_PROP_FPS),
+                "buffer_size_accepted": bool(buffer_supported),
+                "buffer_size_readback": capture.get(cv2.CAP_PROP_BUFFERSIZE),
+                "latest_frame": self.latest_frame,
+            }
+            # perf_counter is monotonic and high resolution on Python 3.12
+            # Windows, where monotonic() can quantize timestamps to ~16 ms.
+            self._start = time.perf_counter()
         except BaseException:
             capture.release()
             raise
         self._capture = capture
         self._frame_id = 0
-        return self
+
+    def _capture_latest(self) -> None:
+        # All native operations, including open/release, belong to this thread.
+        # Never release VideoCapture concurrently with a native read.
+        try:
+            self._open_capture()
+            with self._condition:
+                self._ready = True
+                self._condition.notify_all()
+            while True:
+                with self._condition:
+                    if self._stopping:
+                        break
+                frame = self._read_frame()
+                with self._condition:
+                    if self._stopping:
+                        break
+                    self._latest = frame  # one slot; superseded images are discarded
+                    self._condition.notify_all()
+        except BaseException as error:
+            with self._condition:
+                self._error = error
+                self._latest = None
+        finally:
+            try:
+                self._release_capture()
+            except BaseException as error:
+                with self._condition:
+                    self._cleanup_error = error
+                    if self._error is None:
+                        self._error = error
+                    self._latest = None
+            finally:
+                with self._condition:
+                    self._ready = True
+                    self._condition.notify_all()
 
     def read(self) -> CameraFrame:
+        if self.latest_frame:
+            if self._worker is None:
+                raise RuntimeError("camera is not open")
+            with self._condition:
+                self._condition.wait_for(
+                    lambda: self._latest is not None or self._error is not None or self._stopping
+                )
+                error = self._error
+                frame, self._latest = self._latest, None
+            if error is not None:
+                self.release()
+                raise error
+            if frame is None:
+                raise RuntimeError("camera is not open")
+            return frame
+        return self._read_frame()
+
+    def _read_frame(self) -> CameraFrame:
         if self._capture is None:
             raise RuntimeError("camera is not open")
         try:
             ok, image = self._capture.read()
-            timestamp = time.monotonic() - self._start
+            timestamp = time.perf_counter() - self._start
             if not ok:
                 raise RuntimeError(f"camera {self.index} failed to read a frame")
             image = validate_image(image)
             context = FrameContext(self._frame_id, timestamp, image.shape[1], image.shape[0])
         except BaseException:
-            self.release()
+            self._release_capture()
             raise
         self._frame_id += 1
         return CameraFrame(image, context)
 
     def release(self) -> None:
+        worker = self._worker
+        if worker is not None:
+            with self._condition:
+                self._stopping = True
+                self._latest = None
+                self._condition.notify_all()
+            # Join before destroying state or reopening. Shutdown waits for the
+            # backend's pending read; OpenCV has no portable USB read cancellation.
+            worker.join()
+            self._worker = None
+            error, self._cleanup_error = self._cleanup_error, None
+            if error is not None:
+                raise error
+        else:
+            self._release_capture()
+
+    def _release_capture(self) -> None:
         capture, self._capture = self._capture, None
         if capture is not None:
             capture.release()
