@@ -9,8 +9,10 @@ from gesture_control.core.config import AppConfig
 from gesture_control.recognition import GeometricGestureRecognizer, GeometryConfig
 from gesture_control.temporal import GestureTemporalProcessor, HistoryConfig
 
+from gesture_control.vision import PalmNormalizer
+
 config = AppConfig()
-# normalizer is supplied by the vision integration agent.
+normalizer = PalmNormalizer()
 recognizer = GeometricGestureRecognizer(normalizer, config.recognition)
 temporal = GestureTemporalProcessor(config.temporal, config.recognition, config.smoothing)
 predictions = recognizer.recognize(frame)

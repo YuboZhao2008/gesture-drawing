@@ -12,8 +12,9 @@ at a time; the text panel prioritizes the first observed hand.
 
 ## Final integration
 
-Use the existing application composition. Supply the actual detector, recognizer,
-temporal processor, and caller-owned capture loop; this UI creates no camera:
+Launch the integrated camera application with `.\.venv\Scripts\python.exe -m gesture_control`.
+`runner.py` owns its capture loop and failure-safe resource cleanup. For embedding,
+use the existing application composition with your own stages; this UI creates no camera:
 
 ```python
 from gesture_control.app import GestureControlApp
@@ -47,7 +48,9 @@ Call the wrapped processor's `reset()` before a new stream, and always `close()`
 
 `DemoUI.render(image)` returns an image without a GUI; `present(image)` displays it,
 polls keys once, and returns whether to continue. `handle_key(code)` is independently
-testable. There is no constructor loop or module-level application runner.
+testable. There is no constructor loop; the package runner owns scheduling.
+Large drawing canvases are resized only for presentation (up to 640x480 per pane),
+while pointer mapping and saved PNGs retain the configured canvas resolution.
 
 ## Commands and units
 

@@ -1,12 +1,12 @@
 # Architecture and shared contracts
 
-This repository currently establishes contracts and composition, not working vision
-or device control. Keep the core independent of camera backends, array libraries,
+This repository implements vision, geometric recognition, temporal processing, and
+an internal drawing UI on top of shared contracts. Keep the core independent of camera backends, array libraries,
 model frameworks, GUI frameworks, and operating-system input APIs.
 
 ## Module boundaries and ownership
 
-| Module | Later owner / responsibility | Boundary |
+| Module | Responsibility | Boundary |
 | --- | --- | --- |
 | `core/types.py` | Architecture/core: observation and classification value objects | Standard library only |
 | `core/events.py` | Architecture/core: semantic events and command envelopes | Imports core types only |
@@ -49,7 +49,7 @@ the app also checks cross-stage frame identity and prediction coverage at runtim
 `process_frame` runs one synchronous pass and returns dispatched commands.
 `process_landmarks` bypasses detection while keeping the same downstream path. No
 event bus, background worker, camera loop, mock production backend, or service locator
-is introduced. The image argument is deliberately `object`: a future camera source
+is introduced inside the core app. The image argument is deliberately `object`: the camera source
 and detector agree on representation, color order, and buffer lifetime at composition
 time. A detector must validate that object before interpreting it.
 
@@ -106,8 +106,8 @@ produces instantaneous labels and measurements; temporal processing owns persist
 Temporal pointer tracking clips its output to source-image bounds. Command mapping
 then applies calibration, optional interaction mirroring, and workspace conversion.
 An uncalibrated pixel mapping is x*(width-1), y*(height-1); adapters and command schemas
-must specify rounding and any desktop origin offsets. Calibration storage and multi-
-monitor discovery remain future control work.
+must specify rounding and any desktop origin offsets. The prototype UI persists
+calibration locally; desktop origins and multi-monitor discovery remain future work.
 
 Within a stream, frame IDs strictly increase and timestamps never decrease; dropped
 frame IDs are allowed. `timestamp_s` is elapsed time from a monotonic stream clock,
@@ -148,7 +148,9 @@ and test its transition ordering against these conventions:
 Events describe hand semantics. They must never encode a drawing tool, mouse button,
 key binding, or application-specific action. Mappers and adapters agree on command
 names (for example, an eventual `canvas.*` namespace), parameter units, and schemas.
-No production command catalog is defined yet. Unsupported adapter commands must raise.
+The prototype `pointer.move`, `stroke.begin`, `stroke.point`, `stroke.end`, and
+`canvas.clear` catalog lives in [UI integration](src/gesture_control/ui/README.md).
+Unsupported adapter commands must raise.
 
 ## Configuration and extension rules
 
@@ -179,8 +181,26 @@ small test fixtures should live under `tests/` with provenance and schema versio
 
 ## Validation
 
-Install with `python -m pip install -e ".[dev]"`, then run `python -m pytest`,
-`python -m ruff check .`, `python -m ruff format --check .`, and `python -m mypy`.
+Install all extras with `.\.venv\Scripts\python.exe -m pip install -e ".[dev,vision,ui]"`,
+then run the venv validation commands in [README.md](README.md#testing).
 Current tests verify value invariants, configuration loading, protocol-compatible test
 doubles, no-hand flow, replay entry, cross-stage identity, ordered dispatch, and error
 propagation. They do not establish real-time performance or recognition accuracy.
+
+## Integrated runtime
+
+`python -m gesture_control` enters `runner.py`, constructs one camera and one detector,
+injects `PalmNormalizer` into recognition, and composes the existing app with
+`GestureTemporalProcessor`, `ObservedTemporal`, `DrawingMapper`, and `DrawingCanvas`.
+The UI observer receives each exact temporal batch before mapping so it can mark
+visible IDs and release drawing on the first absent frame. Temporal also ends pinch
+immediately on absence, with generic end before its companion; mapping consumes only
+pinch companions and emits one stroke end. Gesture transitions precede pointers.
+
+The runner owns resource cleanup through independently guarded callbacks, including
+partial startup, capture errors, presentation errors, and keyboard interruption.
+Cleanup failures are logged while later resources are still closed. No desktop input
+is synthesized. UI rendering may shrink the preview of the canvas while preserving
+its configured pixel resolution and source-to-workspace calibration transform.
+Calibration persistence and internal drawing are implemented by `ui/`; the general
+`control/` package remains an extension point for future adapters.

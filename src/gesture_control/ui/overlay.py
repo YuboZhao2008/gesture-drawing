@@ -93,6 +93,7 @@ def render_layout(
     status: str,
     pen_down: bool,
     corners: tuple[tuple[float, float], ...] = (),
+    workspace_size: tuple[int, int] | None = None,
 ) -> Image:
     """Return a BGR composition without opening a window; preserve camera aspect ratio."""
     height, width = canvas.shape[:2]
@@ -124,7 +125,13 @@ def render_layout(
     if diagnostics and frame is not None and output is not None:
         for i, line in enumerate(diagnostic_lines(frame, predictions, output, fps)[:5]):
             label(panel, line, (18, height + 102 + i * 23), color=MUTED)
-    label(panel, f"WORKSPACE {width} x {height}", (width + 30, height + 102), color=ACCENT)
+    workspace_width, workspace_height = workspace_size or (width, height)
+    label(
+        panel,
+        f"WORKSPACE {workspace_width} x {workspace_height}",
+        (width + 30, height + 102),
+        color=ACCENT,
+    )
     for i in range(0, min(len(status), 144), 48):
         label(panel, status[i : i + 48], (width + 30, height + 127 + (i // 48) * 22))
     label(

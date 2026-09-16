@@ -24,5 +24,6 @@ enabled = true
 alpha = 0.35
 
 [workspace]
+# Internal drawing/export resolution, independent of preview-window pixels.
 width = 1920
 height = 1080

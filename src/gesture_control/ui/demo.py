@@ -5,6 +5,7 @@ from __future__ import annotations
 from enum import StrEnum
 from pathlib import Path
 from time import perf_counter
+from typing import cast
 
 import cv2
 import numpy as np
@@ -147,9 +148,24 @@ class DemoUI:
             if self.session is not None
             else (self.mapper.calibration.corners if self.mapper.calibration is not None else ())
         )
+        # Display size never changes canvas pixels or calibration coordinates.
+        canvas = self.canvas.render()
+        scale = min(1.0, 640 / self.canvas.width, 480 / self.canvas.height)
+        if scale < 1:
+            canvas = cast(
+                Image,
+                cv2.resize(
+                    canvas,
+                    (
+                        max(1, round(self.canvas.width * scale)),
+                        max(1, round(self.canvas.height * scale)),
+                    ),
+                    interpolation=cv2.INTER_AREA,
+                ),
+            )
         return render_layout(
             image,
-            self.canvas.render(),
+            canvas,
             self.frame,
             self.predictions,
             self.output,
@@ -158,6 +174,7 @@ class DemoUI:
             status=self.status,
             pen_down=self.canvas.pen_down,
             corners=corners,
+            workspace_size=(self.canvas.width, self.canvas.height),
         )
 
     def present(self, image: Image) -> bool:

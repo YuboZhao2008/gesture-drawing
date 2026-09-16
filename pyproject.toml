@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gesture-control"
 version = "0.1.0"
-description = "Typed foundations for a real-time hand gesture control pipeline"
+description = "Real-time hand gesture recognition, calibration, and drawing prototype"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
