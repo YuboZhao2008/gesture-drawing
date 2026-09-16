@@ -10,6 +10,26 @@ gesture confidence, anatomical handedness, tracking state, measured presentation
 workspace size, tool state, and calibration status. The demo controls one stroke/hand
 at a time; the text panel prioritizes the first observed hand.
 
+Normal mode starts with only essential status: tracking/FPS in the header, the stable
+gesture and confidence in the footer, and pencil/calibration state beside it. The
+skeleton and fingertip remain visible. D adds the raw gesture, track ID, handedness,
+landmark indices, and bounds in a compact camera overlay. No additional GUI package
+is needed. The light drawing paper sits inside restrained dark panel borders.
+
+Calibration displays the requested corner, 1/4 through 4/4 progress, captured corner
+markers, and an amber target. Targets suggest the corner direction: SPACE captures
+the actual temporal pointer at a comfortable position, not the target's fixed position.
+Errors appear in coral; successful calibration returns to drawing with a green
+Calibrated status. C restarts the flow.
+
+Small workspaces use a minimum 640x240 presentation area per pane, with aspect-preserving
+preview scaling and letterboxing. This keeps headers, controls, and feedback readable
+even for a 1x1 or very narrow canvas; export and interaction dimensions remain unchanged.
+Debug cards are hidden during calibration so they cannot cover lower-corner targets.
+Fourth-point geometry and save failures leave the first three captures intact. A save
+failure offers SPACE to retry the current fourth corner; C restarts all captures.
+An externally restored session with too many points displays restart guidance safely.
+
 ## Final integration
 
 Launch the integrated camera application with `.\.venv\Scripts\python.exe -m gesture_control`.
@@ -49,6 +69,8 @@ Call the wrapped processor's `reset()` before a new stream, and always `close()`
 `DemoUI.render(image)` returns an image without a GUI; `present(image)` displays it,
 polls keys once, and returns whether to continue. `handle_key(code)` is independently
 testable. There is no constructor loop; the package runner owns scheduling.
+The event pump uses `cv2.pollKey()` when available, falling back to `waitKey(1)` on
+older builds. Capture paces the real loop; the UI adds no intentional key-poll delay.
 Large drawing canvases are resized only for presentation (up to 640x480 per pane),
 while pointer mapping and saved PNGs retain the configured canvas resolution.
 
@@ -85,7 +107,7 @@ Calling adapter.clear() externally must be paired with mapper.reset(); UI R does
 | ESC | Release and quit |
 | C | Start/restart calibration; drawing is disabled |
 | SPACE | Capture current temporal pointer at the prompted corner |
-| D | Toggle diagnostic details and skeleton |
+| D | Toggle advanced diagnostics, bounds, and landmark indices |
 | R | Clear canvas and release |
 | S | Save canvas PNG without cursor |
 
@@ -106,3 +128,27 @@ crop, or mirroring. Calibration is intentionally independent of preview window s
 No live camera/display validation is claimed by unit tests. Tests exercise raster
 rendering, geometry, persistence, commands, ownership, state transitions, safety,
 and controls without opening a window. No eraser, undo, or brush dynamics are included.
+
+## Visual verification and performance
+
+`python scripts/preview_ui.py --output docs/images` regenerates clearly labeled
+synthetic screenshots of normal, debug, calibration, and error states. The fixture's
+52 FPS label is illustrative, not measured camera performance.
+
+Static layout elements are cached by presentation size (four entries maximum).
+Camera skeletons render after preview scaling; the persistent canvas is resized
+directly into a display buffer before adding a fixed-size, high-contrast cursor.
+No preview operation changes stroke coordinates, saved pixels, or export resolution.
+Existing antialiased stroke interpolation is preserved.
+
+Local render-only benchmark against dd16f99, synthetic 640x480 camera with one hand,
+20 warmup frames and median of five batches of 100 frames:
+
+| Canvas | Normal before / after | Debug before / after |
+| --- | --- | --- |
+| 640x480 | 5.72 / 1.14 ms | 5.87 / 1.42 ms |
+| 1920x1080 | 6.62 / 2.07 ms | 6.60 / 2.27 ms |
+
+These measurements exclude capture, inference, and native window presentation and
+are machine-dependent. The camera launch was attempted during this change, but
+camera 0 failed to return a frame; live tracking validation remains pending.

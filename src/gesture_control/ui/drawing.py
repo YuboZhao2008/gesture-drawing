@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import cast
 
 import cv2
 import numpy as np
@@ -153,10 +154,25 @@ class DrawingCanvas:
         else:
             raise ValueError(f"Unsupported canvas command: {command.name}")
 
-    def render(self) -> Image:
-        image = self.pixels.copy()
+    def render(self, size: tuple[int, int] | None = None) -> Image:
+        """Scale only the preview; preserve export pixels and a readable cursor size."""
+        width, height = size or (self.width, self.height)
+        if width < 1 or height < 1:
+            raise ValueError("Preview dimensions must be positive")
+        image = (
+            self.pixels.copy()
+            if (width, height) == (self.width, self.height)
+            else cast(Image, cv2.resize(self.pixels, (width, height), interpolation=cv2.INTER_AREA))
+        )
         if self.cursor is not None:
-            color = (160, 72, 32) if self.pen_down else (80, 135, 40)
-            cv2.circle(image, self.cursor, 10, color, 2, cv2.LINE_AA)
-            cv2.drawMarker(image, self.cursor, color, cv2.MARKER_CROSS, 6, 1, cv2.LINE_AA)
+            point = (
+                round(self.cursor[0] * (width - 1) / max(1, self.width - 1)),
+                round(self.cursor[1] * (height - 1) / max(1, self.height - 1)),
+            )
+            color = (160, 72, 32) if self.pen_down else (92, 100, 48)
+            cv2.circle(image, point, 10, (255, 255, 255), 3, cv2.LINE_AA)
+            cv2.circle(image, point, 9, color, 1, cv2.LINE_AA)
+            cv2.circle(image, point, 2, color, -1, cv2.LINE_AA)
+            if not self.pen_down:
+                cv2.drawMarker(image, point, color, cv2.MARKER_CROSS, 7, 1, cv2.LINE_AA)
         return image

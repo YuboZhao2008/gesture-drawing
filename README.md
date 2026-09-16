@@ -5,6 +5,13 @@ interactive drawing canvas. Point to move the cursor, pinch to draw, and calibra
 a comfortable working area. Includes a live skeleton, raw/stable gesture diagnostics,
 four-corner calibration, and PNG export.
 
+![Gesture Control interface, synthetic preview](docs/images/ui-normal.png)
+
+Dark OpenCV interface with a persistent skeleton, compact gesture/status footer,
+and optional advanced diagnostics. The screenshot uses synthetic observations;
+its displayed FPS is illustrative. See [calibration preview](docs/images/ui-calibration.png)
+and [debug preview](docs/images/ui-debug.png).
+
 ## Architecture
 
 ```text
@@ -82,7 +89,7 @@ the original processing exception. Startup/runtime errors return a nonzero exit 
 | ESC | Release and quit |
 | C | Start/restart calibration; disable drawing |
 | SPACE | Capture the current pointing position for calibration |
-| D | Toggle diagnostics and skeleton |
+| D | Toggle advanced diagnostics, bounds, and landmark indices |
 | R | Clear canvas and release the stroke |
 | S | Save PNG to `recordings/drawing.png` (overwrites that path) |
 
