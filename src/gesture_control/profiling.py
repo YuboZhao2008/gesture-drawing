@@ -38,8 +38,12 @@ def instrument_pipeline(
     }
     monitor.metadata["source_sha256"] = source_hashes
     monitor.metadata["opencv_threads"] = cv2.getNumThreads()
+    settings = getattr(camera, "settings", None)
     capture = getattr(camera, "_capture", None)
-    if capture is not None:
+    if isinstance(settings, dict):
+        # The capture worker owns native access; consume its startup snapshot.
+        monitor.metadata["camera"] = dict(settings)
+    elif capture is not None:
         monitor.metadata["camera"] = {
             "backend": capture.getBackendName(),
             "reported_fps": capture.get(cv2.CAP_PROP_FPS),
@@ -56,7 +60,11 @@ def instrument_pipeline(
             @wraps(original)
             def timed(*args: Any, **kwargs: Any) -> Any:
                 with monitor.stage(stage):
-                    return original(*args, **kwargs)
+                    result = original(*args, **kwargs)
+                if stage == "detection":
+                    observations["frames"] += 1
+                    observations["frames_with_hands"] += bool(result.hands)
+                return result
 
             setattr(owner, attribute, timed)
             if own_attribute:
@@ -64,6 +72,8 @@ def instrument_pipeline(
             else:
                 restore.callback(delattr, owner, attribute)
 
+        observations = {"frames": 0, "frames_with_hands": 0}
+        monitor.metadata["observations_including_warmup"] = observations
         for owner, attribute, stage in (
             (camera, "read", "capture"),
             (detector, "detect", "detection"),
@@ -90,6 +100,8 @@ def instrument_pipeline(
         ):
             # Slotted mappers have no instance dictionary; patch their class instead.
             hook(owner if hasattr(owner, "__dict__") else type(owner), attribute, stage)
+        if callable(getattr(cv2, "pollKey", None)):
+            hook(cv2, "pollKey", "poll_key")
         backend = getattr(detector, "_backend", None)
         if backend is not None and hasattr(backend, "__dict__"):
             hook(backend, "detect_for_video", "inference")

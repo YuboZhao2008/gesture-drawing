@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from gesture_control.core.performance import PerformanceMonitor
-from gesture_control.core.types import Gesture
+from gesture_control.core.types import FrameContext, Gesture, HandFrame
 from gesture_control.profiling import instrument_pipeline
 from gesture_control.ui.drawing import DrawingMapper
 
@@ -58,3 +58,34 @@ def test_hooks_restore_after_processing_exception(tmp_path: Path) -> None:
         raise RuntimeError("failed")
     assert cv2.resize is resize and DrawingMapper.map is mapping
     assert "render" not in vars(pipeline.ui)
+
+
+def test_profile_uses_camera_snapshot_and_counts_observations(tmp_path: Path) -> None:
+    pipeline = Pipeline(tmp_path)
+    monitor = PerformanceMonitor(warmup_frames=0)
+    camera = SimpleNamespace(settings={"backend": "test", "latest_frame": True}, read=lambda: None)
+    # There is deliberately no native camera property API on this sentinel.
+    camera._capture = object()
+    context = FrameContext(0, 0, 640, 480)
+    frames = iter((HandFrame(context), HandFrame(context, (source_hand(Gesture.POINT),))))
+    detector = SimpleNamespace(detect=lambda: next(frames))
+    poll_key = cv2.pollKey
+    with instrument_pipeline(
+        monitor,
+        camera=camera,
+        detector=detector,
+        recognizer=pipeline.recognizer,
+        temporal=pipeline.temporal,
+        ui=pipeline.ui,
+    ):
+        with monitor.frame():
+            detector.detect()
+            detector.detect()
+        assert cv2.pollKey is not poll_key
+    assert cv2.pollKey is poll_key
+    assert monitor.metadata["camera"] == camera.settings
+    assert monitor.metadata["camera"] is not camera.settings
+    assert monitor.metadata["observations_including_warmup"] == {
+        "frames": 2,
+        "frames_with_hands": 1,
+    }
