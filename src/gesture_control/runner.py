@@ -36,6 +36,10 @@ def run(
     max_frames: int | None = None,
     headless: bool = False,
     performance: PerformanceMonitor | None = None,
+    camera_width: int = 640,
+    camera_height: int = 480,
+    latest_frame: bool = True,
+    diagnostics: bool | None = None,
 ) -> int:
     """Process a camera stream once; return frame count. Errors propagate after cleanup.
 
@@ -64,11 +68,18 @@ def run(
             drawing_path=drawing_path,
         )
         resources.callback(_cleanup, "UI", ui.close)
+        ui.diagnostics = config.debug if diagnostics is None else diagnostics
         detector = MediaPipeHandDetector(
             model_path, min_detection_confidence=config.camera.min_detection_confidence
         )
         resources.callback(_cleanup, "detector", detector.close)
-        camera = OpenCVCamera(index=config.camera.index, fps=config.camera.target_fps)
+        camera = OpenCVCamera(
+            index=config.camera.index,
+            fps=config.camera.target_fps,
+            width=camera_width,
+            height=camera_height,
+            latest_frame=latest_frame,
+        )
         resources.callback(_cleanup, "camera", camera.close)
         temporal = GestureTemporalProcessor(config.temporal, config.recognition, config.smoothing)
         resources.callback(_cleanup, "temporal state", temporal.reset)
@@ -82,7 +93,7 @@ def run(
             mapper=ui.mapper,
             adapter=ui.canvas,
         )
-        # Skeleton and diagnostics are on by default so acquisition is visible.
+        # Normal mode retains the skeleton; detailed diagnostics are opt-in.
         camera.open()
         if performance is not None:
             from .profiling import instrument_pipeline
@@ -120,6 +131,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--calibration", type=Path, default=Path("recordings/calibration.json"))
     parser.add_argument("--drawing", type=Path, default=Path("recordings/drawing.png"))
     parser.add_argument("--max-frames", type=int, help="Exit after N frames (hardware smoke check)")
+    parser.add_argument("--camera-width", type=int, default=640)
+    parser.add_argument("--camera-height", type=int, default=480)
+    parser.add_argument(
+        "--synchronous-camera", action="store_true", help="Disable latest-frame capture"
+    )
+    diagnostics_options = parser.add_mutually_exclusive_group()
+    diagnostics_options.add_argument(
+        "--diagnostics",
+        action="store_true",
+        default=None,
+        help="Start with advanced diagnostics (otherwise use config.debug)",
+    )
+    diagnostics_options.add_argument(
+        "--no-diagnostics",
+        dest="diagnostics",
+        action="store_false",
+        help="Start in normal mode, keeping the hand skeleton visible",
+    )
     parser.add_argument(
         "--profile", type=Path, help="Write stage timings as JSON after a successful run"
     )
@@ -152,6 +181,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             max_frames=args.max_frames,
             headless=args.headless,
             performance=performance,
+            camera_width=args.camera_width,
+            camera_height=args.camera_height,
+            latest_frame=not args.synchronous_camera,
+            diagnostics=args.diagnostics,
         )
         if performance is not None:
             report = performance.report()

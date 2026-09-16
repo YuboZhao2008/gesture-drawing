@@ -103,7 +103,7 @@ def test_camera_failure(capture: MagicMock) -> None:
 
 def test_camera_lifecycle(capture: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
     ticks = iter([100.0, 100.1, 100.3])
-    monkeypatch.setattr("gesture_control.vision.camera.time.monotonic", lambda: next(ticks))
+    monkeypatch.setattr("gesture_control.vision.camera.time.perf_counter", lambda: next(ticks))
     with OpenCVCamera(width=1280, height=720, fps=60) as camera:
         assert camera.open() is camera
         first, second = camera.read(), camera.read()
@@ -114,7 +114,8 @@ def test_camera_lifecycle(capture: MagicMock, monkeypatch: pytest.MonkeyPatch) -
         assert second.context.timestamp_s == pytest.approx(0.3)
     camera.release()
     capture.release.assert_called_once()
-    assert capture.set.call_count == 3
+    cv2 = pytest.importorskip("cv2")
+    capture.set.assert_any_call(cv2.CAP_PROP_BUFFERSIZE, 1)
     with pytest.raises(RuntimeError, match="not open"):
         camera.read()
 
@@ -294,3 +295,24 @@ def test_backend_color_conversion(
     passed = backend.detect_for_video.call_args.args[0].numpy_view()
     assert passed[0, 0].tolist() == [3, 2, 1]
     assert image[0, 0].tolist() == [1, 2, 3]
+
+
+def test_rgb_scratch_reuse_preserves_backend_images(
+    backend: MagicMock, tmp_path: Path, image: Any
+) -> None:
+    image[0, 0] = [1, 2, 3]
+    with make_detector(tmp_path) as detector:
+        detector.detect(image, FrameContext(0, 0, 640, 480))
+        first_rgb = detector._rgb
+        first_backend_image = backend.detect_for_video.call_args.args[0]
+        image[0, 0] = [4, 5, 6]
+        detector.detect(image, FrameContext(2, 0, 640, 480))
+        assert detector._rgb is first_rgb
+        assert first_backend_image.numpy_view()[0, 0].tolist() == [3, 2, 1]
+        assert backend.detect_for_video.call_args.args[0].numpy_view()[0, 0].tolist() == [6, 5, 4]
+        # Noncontiguous source and new dimensions still use contiguous RGB storage.
+        detector.detect(image[::2, ::2], FrameContext(3, 0.1, 320, 240))
+        assert detector._rgb is not first_rgb
+        assert detector._rgb.flags.c_contiguous
+        assert image[0, 0].tolist() == [4, 5, 6]
+    assert detector._rgb is None
