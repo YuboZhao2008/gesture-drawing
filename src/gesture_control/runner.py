@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
+import platform
 from collections.abc import Callable, Sequence
-from contextlib import ExitStack
+from contextlib import ExitStack, nullcontext
+from dataclasses import asdict
+from importlib.metadata import version
 from pathlib import Path
 
 from .app import GestureControlApp
 from .core.config import AppConfig, load_config
+from .core.performance import PerformanceMonitor
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,6 +35,7 @@ def run(
     drawing_path: str | Path = "recordings/drawing.png",
     max_frames: int | None = None,
     headless: bool = False,
+    performance: PerformanceMonitor | None = None,
 ) -> int:
     """Process a camera stream once; return frame count. Errors propagate after cleanup.
 
@@ -68,24 +74,39 @@ def run(
         resources.callback(_cleanup, "temporal state", temporal.reset)
         resources.callback(_cleanup, "drawing mapper", ui.mapper.reset)
         resources.callback(_cleanup, "active stroke", ui.canvas.release)
+        recognizer = GeometricGestureRecognizer(PalmNormalizer(), config.recognition)
         app = GestureControlApp(
             detector=detector,
-            recognizer=GeometricGestureRecognizer(PalmNormalizer(), config.recognition),
+            recognizer=recognizer,
             temporal=ui.wrap_temporal(temporal),
             mapper=ui.mapper,
             adapter=ui.canvas,
         )
         # Skeleton and diagnostics are on by default so acquisition is visible.
         camera.open()
+        if performance is not None:
+            from .profiling import instrument_pipeline
+
+            resources.enter_context(
+                instrument_pipeline(
+                    performance,
+                    camera=camera,
+                    detector=detector,
+                    recognizer=recognizer,
+                    temporal=temporal,
+                    ui=ui,
+                )
+            )
         count = 0
         while max_frames is None or count < max_frames:
-            captured = camera.read()
-            app.process_frame(captured.image, captured.context)
-            count += 1
-            if headless:
-                ui.render(captured.image)
-            elif not ui.present(captured.image):
-                break
+            with performance.frame() if performance is not None else nullcontext():
+                captured = camera.read()
+                app.process_frame(captured.image, captured.context)
+                count += 1
+                if headless:
+                    ui.render(captured.image)
+                elif not ui.present(captured.image):
+                    break
         LOGGER.info("Processed %d frames", count)
         return count
 
@@ -100,6 +121,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--drawing", type=Path, default=Path("recordings/drawing.png"))
     parser.add_argument("--max-frames", type=int, help="Exit after N frames (hardware smoke check)")
     parser.add_argument(
+        "--profile", type=Path, help="Write stage timings as JSON after a successful run"
+    )
+    parser.add_argument(
+        "--profile-warmup", type=int, default=30, help="Exclude initial frames (default 30)"
+    )
+    parser.add_argument(
         "--headless", action="store_true", help="Render without windows; needs frame limit"
     )
     args = parser.parse_args(argv)
@@ -107,11 +134,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--max-frames must be positive")
     if args.headless and args.max_frames is None:
         parser.error("--headless requires --max-frames")
+    if args.profile_warmup < 0:
+        parser.error("--profile-warmup must be nonnegative")
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     try:
         config = load_config(args.config) if args.config else AppConfig()
         if config.debug:
             logging.getLogger().setLevel(logging.DEBUG)
+        performance = (
+            PerformanceMonitor(warmup_frames=args.profile_warmup) if args.profile else None
+        )
         run(
             config,
             model_path=args.model,
@@ -119,7 +151,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             drawing_path=args.drawing,
             max_frames=args.max_frames,
             headless=args.headless,
+            performance=performance,
         )
+        if performance is not None:
+            report = performance.report()
+            report["environment"] = {
+                "python": platform.python_version(),
+                "platform": platform.platform(),
+                "dependencies": {
+                    name: version(name) for name in ("numpy", "opencv-contrib-python", "mediapipe")
+                },
+                "config": asdict(config),
+                "headless": args.headless,
+                "model": str(args.model),
+            }
+            args.profile.parent.mkdir(parents=True, exist_ok=True)
+            args.profile.write_text(json.dumps(report, indent=2), encoding="utf-8")
+            LOGGER.info(
+                "Performance report: %s (%.1f FPS)", args.profile, report["effective_fps"] or 0
+            )
     except KeyboardInterrupt:
         LOGGER.info("Interrupted; resources closed")
         return 130
