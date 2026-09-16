@@ -9,11 +9,13 @@ Camera → hand landmarks → normalized landmarks → gesture predictions
        → temporal filtering / sequences → commands → output adapters
 ```
 
-**Current status:** architecture and contracts only. The package provides validated
-data types, configuration loading, structural interfaces, and synchronous frame
-orchestration. Camera backends, classifiers, temporal state machines, desktop input,
-training, and UI are extension points; none are implemented yet. Runtime dependencies
-are limited to the Python standard library. There is no camera demo or CLI yet.
+**Current status:** validated core contracts, synchronous frame orchestration,
+deterministic geometric recognition, and per-hand temporal stabilization are
+implemented. Recognition uses an injected canonical landmark normalizer. Camera
+backends, desktop input, training, and UI remain extension points. Runtime
+dependencies are limited to the Python standard library. There is no camera demo
+or CLI yet. See the [recognition and temporal integration guide](src/gesture_control/recognition/README.md)
+for constructors, thresholds, event ordering, pointer behavior, and limitations.
 
 ## Development
 
