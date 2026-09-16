@@ -1,6 +1,6 @@
 """OpenCV rendering over shared observations, independent of detector backends."""
 
-from typing import cast
+from functools import lru_cache
 
 import cv2
 import numpy as np
@@ -8,6 +8,7 @@ import numpy as np
 from gesture_control.core.events import TemporalOutput
 from gesture_control.core.types import GesturePrediction, HandFrame, HandLandmarks, LandmarkIndex
 
+from .calibration import CORNERS
 from .drawing import Image
 
 HAND_CONNECTIONS = (
@@ -33,9 +34,14 @@ HAND_CONNECTIONS = (
     (18, 19),
     (19, 20),
 )
-INK = (229, 234, 244)
-MUTED = (157, 171, 190)
-ACCENT = (176, 224, 67)
+INK = (239, 237, 232)
+MUTED = (154, 148, 138)
+ACCENT = (185, 220, 103)
+BACKGROUND = (22, 20, 17)
+SURFACE = (32, 29, 25)
+BORDER = (57, 51, 43)
+WARNING = (99, 193, 242)
+ERROR = (126, 133, 244)
 
 
 def label(
@@ -49,19 +55,24 @@ def label(
     cv2.putText(image, text, position, cv2.FONT_HERSHEY_SIMPLEX, scale, color, 1, cv2.LINE_AA)
 
 
-def draw_hand(image: Image, hand: HandLandmarks) -> None:
+def draw_hand(image: Image, hand: HandLandmarks, *, diagnostics: bool = True) -> None:
     height, width = image.shape[:2]
     points = [
         (round(min(2, max(-1, p.x)) * (width - 1)), round(min(2, max(-1, p.y)) * (height - 1)))
         for p in hand.landmarks
     ]
     for a, b in HAND_CONNECTIONS:
-        cv2.line(image, points[a], points[b], ACCENT, 2, cv2.LINE_AA)
-    for point in points:
-        cv2.circle(image, point, 3, INK, -1, cv2.LINE_AA)
-    cv2.circle(image, points[LandmarkIndex.INDEX_TIP], 10, (80, 195, 255), 2, cv2.LINE_AA)
-    xs, ys = zip(*points, strict=True)
-    cv2.rectangle(image, (min(xs), min(ys)), (max(xs), max(ys)), MUTED, 1)
+        cv2.line(image, points[a], points[b], ACCENT, 1, cv2.LINE_AA)
+    for index, point in enumerate(points):
+        cv2.circle(image, point, 2, INK, -1, cv2.LINE_AA)
+        if diagnostics:
+            label(image, str(index), (point[0] + 5, point[1] - 5), scale=0.3)
+    tip = points[LandmarkIndex.INDEX_TIP]
+    cv2.circle(image, tip, 9, BACKGROUND, 3, cv2.LINE_AA)
+    cv2.circle(image, tip, 8, ACCENT, 1, cv2.LINE_AA)
+    if diagnostics:
+        xs, ys = zip(*points, strict=True)
+        cv2.rectangle(image, (min(xs), min(ys)), (max(xs), max(ys)), MUTED, 1)
 
 
 def diagnostic_lines(
@@ -81,6 +92,59 @@ def diagnostic_lines(
     return tuple(lines)
 
 
+def fit_label(
+    image: Image,
+    text: str,
+    position: tuple[int, int],
+    width: int,
+    *,
+    color: tuple[int, int, int] = MUTED,
+    scale: float = 0.45,
+) -> None:
+    """Keep feedback inside its panel, including long filesystem errors."""
+    while text and cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, scale, 1)[0][0] > width:
+        text = text[:-4] + "..." if len(text) > 4 else ""
+    label(image, text, position, color=color, scale=scale)
+
+
+@lru_cache(maxsize=4)
+def _chrome(width: int, height: int) -> Image:
+    """Immutable cached chrome. Dynamic renderers copy once and fill panel regions."""
+    total = width * 2 + 36
+    panel: Image = np.full((height + 246, total, 3), BACKGROUND, dtype=np.uint8)
+    cv2.rectangle(panel, (12, 68), (width + 12, height + 100), SURFACE, -1)
+    cv2.rectangle(panel, (width + 24, 68), (total - 12, height + 100), SURFACE, -1)
+    cv2.line(panel, (12, 57), (total - 12, 57), BORDER, 1)
+    for x in (12, width + 24):
+        cv2.rectangle(panel, (x, 68), (x + width, height + 100), BORDER, 1)
+    label(panel, "Gesture Control", (24, 36), scale=0.75)
+    label(panel, "01 / CAMERA", (26, 89), color=MUTED, scale=0.4)
+    label(panel, "02 / DRAWING CANVAS", (width + 38, 89), color=MUTED, scale=0.4)
+    cv2.line(panel, (24, height + 197), (total - 24, height + 197), BORDER, 1)
+    label(
+        panel,
+        "C  Calibrate    R  Clear    S  Save    D  Debug    ESC  Exit",
+        (24, height + 225),
+        color=MUTED,
+        scale=0.45,
+    )
+    panel.setflags(write=False)
+    return panel
+
+
+def essential_state(frame: HandFrame | None, output: TemporalOutput | None) -> tuple[str, str]:
+    if frame is None or not frame.hands:
+        return "NO HAND", "Show your hand to begin"
+    state = (
+        next((s for s in output.stable_gestures if s.hand_id == frame.hands[0].hand_id), None)
+        if output
+        else None
+    )
+    if state is None:
+        return "ACQUIRING", "Hold your gesture steady"
+    return state.gesture.value.replace("_", " ").upper(), f"Confidence {state.confidence:.0%}"
+
+
 def render_layout(
     camera: Image,
     canvas: Image,
@@ -94,51 +158,114 @@ def render_layout(
     pen_down: bool,
     corners: tuple[tuple[float, float], ...] = (),
     workspace_size: tuple[int, int] | None = None,
+    calibration_step: int | None = None,
+    calibrated: bool = False,
+    calibration_error: bool = False,
 ) -> Image:
-    """Return a BGR composition without opening a window; preserve camera aspect ratio."""
+    """Render at presentation resolution; never mutate camera, canvas, or coordinates."""
     height, width = canvas.shape[:2]
-    preview = camera.copy()
-    if diagnostics and frame is not None:
+    panel = _chrome(width, height).copy()
+    total = panel.shape[1]
+    tracking = frame is not None and bool(frame.hands)
+    color = ACCENT if tracking else WARNING
+    cv2.circle(panel, (total - 265, 29), 4, color, -1, cv2.LINE_AA)
+    label(panel, "Tracking" if tracking else "Searching", (total - 251, 35), color=color)
+    label(panel, f"{fps:.0f} FPS", (total - 101, 35), color=MUTED)
+
+    # Resize before drawing the skeleton, avoiding a full source-resolution copy.
+    scale = min(width / camera.shape[1], height / camera.shape[0])
+    rw, rh = max(1, round(camera.shape[1] * scale)), max(1, round(camera.shape[0] * scale))
+    ox, oy = 12 + (width - rw) // 2, 100 + (height - rh) // 2
+    preview = panel[oy : oy + rh, ox : ox + rw]
+    if (rh, rw) == camera.shape[:2]:
+        preview[:] = camera
+    else:
+        cv2.resize(camera, (rw, rh), dst=preview, interpolation=cv2.INTER_AREA)
+    if frame is not None:
         for hand in frame.hands:
-            draw_hand(preview, hand)
-    scale = min(width / preview.shape[1], height / preview.shape[0])
-    resized = cast(
-        Image,
-        cv2.resize(
-            preview,
-            (max(1, round(preview.shape[1] * scale)), max(1, round(preview.shape[0] * scale))),
-        ),
-    )
-    left: Image = np.full((height, width, 3), (29, 24, 20), dtype=np.uint8)
-    ox, oy = (width - resized.shape[1]) // 2, (height - resized.shape[0]) // 2
-    for i, (x, y) in enumerate(corners):
-        point = (round(x * (resized.shape[1] - 1)), round(y * (resized.shape[0] - 1)))
-        cv2.circle(resized, point, 12, ACCENT, 2, cv2.LINE_AA)
-        label(resized, str(i + 1), point, color=ACCENT)
-    left[oy : oy + resized.shape[0], ox : ox + resized.shape[1]] = resized
-    panel: Image = np.full((height + 246, width * 2 + 36, 3), (29, 24, 20), dtype=np.uint8)
-    label(panel, "GESTURE / STUDIO", (18, 30), color=ACCENT, scale=0.7)
-    label(panel, "CAMERA + TRACKING", (18, 62), color=MUTED)
-    label(panel, f"PENCIL / {'DRAWING' if pen_down else 'HOVER'}", (width + 30, 62), color=MUTED)
-    panel[76 : 76 + height, 12 : 12 + width] = left
-    panel[76 : 76 + height, width + 24 : width * 2 + 24] = canvas
+            draw_hand(preview, hand, diagnostics=diagnostics)
+    for i, (x, y) in enumerate(corners if diagnostics or calibration_step is not None else ()):
+        point = (round(x * (rw - 1)), round(y * (rh - 1)))
+        cv2.circle(preview, point, 6, ACCENT, -1, cv2.LINE_AA)
+        label(preview, str(i + 1), (point[0] + 10, point[1] + 4), color=ACCENT, scale=0.4)
+    if calibration_step is not None:
+        x, y = ((0.15, 0.15), (0.85, 0.15), (0.85, 0.85), (0.15, 0.85))[calibration_step]
+        target = (round(x * rw), round(y * rh))
+        cv2.circle(preview, target, 22, BACKGROUND, 5, cv2.LINE_AA)
+        cv2.circle(preview, target, 21, WARNING, 2, cv2.LINE_AA)
+        cv2.drawMarker(preview, target, WARNING, cv2.MARKER_CROSS, 14, 1, cv2.LINE_AA)
+        label(panel, "CALIBRATION", (width - 145, 89), color=WARNING, scale=0.4)
+    elif diagnostics:
+        label(panel, "DEBUG", (width - 62, 89), color=WARNING, scale=0.4)
+    panel[100 : height + 100, width + 24 : width * 2 + 24] = canvas
+    workspace = workspace_size or (width, height)
+    label(panel, f"{workspace[0]} x {workspace[1]}", (total - 127, 89), color=MUTED, scale=0.4)
+
     if diagnostics and frame is not None and output is not None:
-        for i, line in enumerate(diagnostic_lines(frame, predictions, output, fps)[:5]):
-            label(panel, line, (18, height + 102 + i * 23), color=MUTED)
-    workspace_width, workspace_height = workspace_size or (width, height)
-    label(
-        panel,
-        f"WORKSPACE {workspace_width} x {workspace_height}",
-        (width + 30, height + 102),
-        color=ACCENT,
-    )
-    for i in range(0, min(len(status), 144), 48):
-        label(panel, status[i : i + 48], (width + 30, height + 127 + (i // 48) * 22))
-    label(
-        panel,
-        "ESC Quit   C Calibrate   SPACE Capture   D Diagnostics   R Clear   S Save",
-        (18, height + 230),
-        color=MUTED,
-        scale=0.48,
-    )
+        lines = diagnostic_lines(frame, predictions, output, fps)[:4]
+        card_height = min(rh, 16 + len(lines) * 20)
+        card = preview[rh - card_height : rh, : min(rw, 345)]
+        card[:] = SURFACE
+        for i, line in enumerate(lines):
+            fit_label(card, line, (10, 20 + i * 20), card.shape[1] - 20, scale=0.4)
+
+    base = height + 100
+    if calibration_step is not None:
+        label(
+            panel,
+            f"{calibration_step + 1}/4  {CORNERS[calibration_step]}",
+            (24, base + 34),
+            color=WARNING,
+            scale=0.65,
+        )
+        fit_label(
+            panel,
+            "Point at a comfortable corner near the target. SPACE to capture.",
+            (24, base + 64),
+            width - 20,
+        )
+        for i in range(4):
+            cv2.circle(
+                panel,
+                (width + 45 + i * 24, base + 29),
+                5,
+                ACCENT if i < calibration_step else WARNING if i == calibration_step else BORDER,
+                -1,
+                cv2.LINE_AA,
+            )
+        fit_label(
+            panel,
+            status if calibration_error else "Drawing paused / C to restart",
+            (width + 38, base + 64),
+            width - 50,
+            color=ERROR if calibration_error else MUTED,
+        )
+    else:
+        gesture, confidence = essential_state(frame, output)
+        label(panel, gesture, (24, base + 36), color=INK, scale=0.7)
+        label(panel, confidence, (24, base + 65), color=MUTED, scale=0.45)
+        cv2.circle(
+            panel, (width + 42, base + 29), 4, ACCENT if pen_down else MUTED, -1, cv2.LINE_AA
+        )
+        label(
+            panel,
+            "Pencil / Drawing" if pen_down else "Pencil / Hover",
+            (width + 56, base + 35),
+            color=ACCENT if pen_down else INK,
+            scale=0.5,
+        )
+        label(
+            panel,
+            "Calibrated" if calibrated else "Not calibrated",
+            (total - 172, base + 35),
+            color=ACCENT if calibrated else WARNING,
+            scale=0.45,
+        )
+        fit_label(
+            panel,
+            status,
+            (width + 38, base + 65),
+            width - 50,
+            color=ERROR if calibration_error else MUTED,
+        )
     return panel

@@ -5,7 +5,6 @@ from __future__ import annotations
 from enum import StrEnum
 from pathlib import Path
 from time import perf_counter
-from typing import cast
 
 import cv2
 import numpy as np
@@ -55,7 +54,8 @@ class DemoUI:
         self.calibration_path = Path(calibration_path)
         self.drawing_path = Path(drawing_path)
         self.session: CalibrationSession | None = None
-        self.diagnostics = True
+        self.diagnostics = False
+        self.feedback_error = False
         self.running = True
         self.status = "Uncalibrated: full camera workspace"
         self.frame: HandFrame | None = None
@@ -72,6 +72,7 @@ class DemoUI:
                 self.status = "Calibrated: workspace loaded"
             except (OSError, ValueError) as error:
                 self.status = f"Calibration not loaded: {error}"
+                self.feedback_error = True
 
     def observe(
         self, frame: HandFrame, predictions: tuple[GesturePrediction, ...], output: TemporalOutput
@@ -104,18 +105,23 @@ class DemoUI:
         elif action is KeyAction.CLEAR:
             self.canvas.clear()
             self.mapper.reset()
+            self.status = "Canvas cleared / Point to move, pinch to draw"
+            self.feedback_error = False
         elif action is KeyAction.CALIBRATE:
             self.canvas.release()
             self.mapper.enabled = False
             self.mapper.reset()
             self.session = CalibrationSession()
             self.status = self.session.prompt
+            self.feedback_error = False
         elif action is KeyAction.CAPTURE and self.session is not None:
             if self.pointer is None:
                 self.status = "No pointer. Show a hand, then SPACE to capture"
+                self.feedback_error = True
                 return
             try:
                 calibration = self.session.capture(self.pointer)
+                self.feedback_error = False
                 if calibration is not None:
                     calibration.save(self.calibration_path)
                     self.mapper.calibration = calibration
@@ -126,14 +132,17 @@ class DemoUI:
                     self.status = self.session.prompt
             except (ValueError, OSError) as error:
                 self.status = f"{error}. C to restart"
+                self.feedback_error = True
         elif action is KeyAction.SAVE:
             try:
                 self.drawing_path.parent.mkdir(parents=True, exist_ok=True)
                 if not cv2.imwrite(str(self.drawing_path), self.canvas.pixels):
                     raise OSError("Image encoder failed")
                 self.status = f"Drawing saved: {self.drawing_path.name}"
+                self.feedback_error = False
             except (OSError, cv2.error) as error:
                 self.status = f"Save failed: {error}"
+                self.feedback_error = True
 
     def render(self, image: Image) -> Image:
         if image.dtype != np.uint8 or image.ndim != 3 or image.shape[2] != 3:
@@ -149,20 +158,10 @@ class DemoUI:
             else (self.mapper.calibration.corners if self.mapper.calibration is not None else ())
         )
         # Display size never changes canvas pixels or calibration coordinates.
-        canvas = self.canvas.render()
         scale = min(1.0, 640 / self.canvas.width, 480 / self.canvas.height)
-        if scale < 1:
-            canvas = cast(
-                Image,
-                cv2.resize(
-                    canvas,
-                    (
-                        max(1, round(self.canvas.width * scale)),
-                        max(1, round(self.canvas.height * scale)),
-                    ),
-                    interpolation=cv2.INTER_AREA,
-                ),
-            )
+        canvas = self.canvas.render(
+            (max(1, round(self.canvas.width * scale)), max(1, round(self.canvas.height * scale)))
+        )
         return render_layout(
             image,
             canvas,
@@ -175,6 +174,9 @@ class DemoUI:
             pen_down=self.canvas.pen_down,
             corners=corners,
             workspace_size=(self.canvas.width, self.canvas.height),
+            calibration_step=len(self.session.points) if self.session is not None else None,
+            calibrated=self.mapper.calibration is not None,
+            calibration_error=self.feedback_error,
         )
 
     def present(self, image: Image) -> bool:
