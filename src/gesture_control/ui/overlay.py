@@ -163,7 +163,14 @@ def render_layout(
     calibration_error: bool = False,
 ) -> Image:
     """Render at presentation resolution; never mutate camera, canvas, or coordinates."""
-    height, width = canvas.shape[:2]
+    canvas_height, canvas_width = canvas.shape[:2]
+    # Presentation has a readable minimum, independent of interaction resolution.
+    # Tiny/narrow workspaces are letterboxed rather than shrinking the text chrome.
+    width, height = max(640, canvas_width), max(240, canvas_height)
+    if calibration_step is not None and not 0 <= calibration_step < len(CORNERS):
+        calibration_step = len(CORNERS) - 1
+        calibration_error = True
+        status = "Calibration interrupted / C to restart"
     panel = _chrome(width, height).copy()
     total = panel.shape[1]
     tracking = frame is not None and bool(frame.hands)
@@ -197,11 +204,13 @@ def render_layout(
         label(panel, "CALIBRATION", (width - 145, 89), color=WARNING, scale=0.4)
     elif diagnostics:
         label(panel, "DEBUG", (width - 62, 89), color=WARNING, scale=0.4)
-    panel[100 : height + 100, width + 24 : width * 2 + 24] = canvas
-    workspace = workspace_size or (width, height)
+    canvas_x = width + 24 + (width - canvas_width) // 2
+    canvas_y = 100 + (height - canvas_height) // 2
+    panel[canvas_y : canvas_y + canvas_height, canvas_x : canvas_x + canvas_width] = canvas
+    workspace = workspace_size or (canvas_width, canvas_height)
     label(panel, f"{workspace[0]} x {workspace[1]}", (total - 127, 89), color=MUTED, scale=0.4)
 
-    if diagnostics and frame is not None and output is not None:
+    if diagnostics and calibration_step is None and frame is not None and output is not None:
         lines = diagnostic_lines(frame, predictions, output, fps)[:4]
         card_height = min(rh, 16 + len(lines) * 20)
         card = preview[rh - card_height : rh, : min(rw, 345)]

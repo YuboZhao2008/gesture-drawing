@@ -130,8 +130,11 @@ class DemoUI:
                     self.status = "Calibrated: pinch to draw"
                 else:
                     self.status = self.session.prompt
-            except (ValueError, OSError) as error:
-                self.status = f"{error}. C to restart"
+            except OSError:
+                self.status = "Save failed / SPACE to retry / C to restart"
+                self.feedback_error = True
+            except ValueError:
+                self.status = "Invalid corners / C to restart calibration"
                 self.feedback_error = True
         elif action is KeyAction.SAVE:
             try:
@@ -158,7 +161,7 @@ class DemoUI:
             else (self.mapper.calibration.corners if self.mapper.calibration is not None else ())
         )
         # Display size never changes canvas pixels or calibration coordinates.
-        scale = min(1.0, 640 / self.canvas.width, 480 / self.canvas.height)
+        scale = min(640 / self.canvas.width, 480 / self.canvas.height)
         canvas = self.canvas.render(
             (max(1, round(self.canvas.width * scale)), max(1, round(self.canvas.height * scale)))
         )
@@ -192,7 +195,8 @@ class DemoUI:
             cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
             self._window_open = True
         cv2.imshow(self.window_name, self.render(image))
-        self.handle_key(cv2.waitKey(1))
+        poll_key = getattr(cv2, "pollKey", None)
+        self.handle_key(poll_key() if callable(poll_key) else cv2.waitKey(1))
         try:
             visible = cv2.getWindowProperty(self.window_name, cv2.WND_PROP_VISIBLE) >= 1
         except cv2.error:

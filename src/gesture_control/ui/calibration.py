@@ -96,9 +96,13 @@ class CalibrationSession:
 
     @property
     def prompt(self) -> str:
+        if len(self.points) >= len(CORNERS):
+            return "Calibration interrupted / C to restart"
         return f"Aim at {CORNERS[len(self.points)]} - SPACE to capture"
 
     def capture(self, point: Point) -> Calibration | None:
+        if len(self.points) >= len(CORNERS):
+            raise ValueError("Calibration has too many corners; restart")
         candidate = (*self.points, point)
         if len(candidate) == 4:
             result = Calibration(candidate)

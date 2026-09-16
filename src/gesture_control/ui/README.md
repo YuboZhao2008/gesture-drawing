@@ -22,6 +22,14 @@ the actual temporal pointer at a comfortable position, not the target's fixed po
 Errors appear in coral; successful calibration returns to drawing with a green
 Calibrated status. C restarts the flow.
 
+Small workspaces use a minimum 640x240 presentation area per pane, with aspect-preserving
+preview scaling and letterboxing. This keeps headers, controls, and feedback readable
+even for a 1x1 or very narrow canvas; export and interaction dimensions remain unchanged.
+Debug cards are hidden during calibration so they cannot cover lower-corner targets.
+Fourth-point geometry and save failures leave the first three captures intact. A save
+failure offers SPACE to retry the current fourth corner; C restarts all captures.
+An externally restored session with too many points displays restart guidance safely.
+
 ## Final integration
 
 Launch the integrated camera application with `.\.venv\Scripts\python.exe -m gesture_control`.
@@ -61,6 +69,8 @@ Call the wrapped processor's `reset()` before a new stream, and always `close()`
 `DemoUI.render(image)` returns an image without a GUI; `present(image)` displays it,
 polls keys once, and returns whether to continue. `handle_key(code)` is independently
 testable. There is no constructor loop; the package runner owns scheduling.
+The event pump uses `cv2.pollKey()` when available, falling back to `waitKey(1)` on
+older builds. Capture paces the real loop; the UI adds no intentional key-poll delay.
 Large drawing canvases are resized only for presentation (up to 640x480 per pane),
 while pointer mapping and saved PNGs retain the configured canvas resolution.
 
