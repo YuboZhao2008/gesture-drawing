@@ -1,1 +1,5 @@
-"""Extension point for gesture state machines, sequences, and pointer filtering."""
+"""Timestamp-driven gesture stabilization."""
+
+from .processor import GestureTemporalProcessor, HistoryConfig
+
+__all__ = ["GestureTemporalProcessor", "HistoryConfig"]

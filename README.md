@@ -9,13 +9,14 @@ Camera → hand landmarks → normalized landmarks → gesture predictions
        → temporal filtering / sequences → commands → output adapters
 ```
 
-**Current status:** shared contracts and a working optional vision layer. The package
-provides validated data types, configuration loading, synchronous frame orchestration,
-OpenCV capture, MediaPipe hand landmarks, canonical normalization and debug overlays.
-Classifiers, temporal processing, desktop input, training and UI remain extension points.
-Core runtime dependencies are limited to the standard library; install `.[dev,vision]`
-for camera/model support. See [vision integration](src/gesture_control/vision/README.md)
-for model setup, public APIs, tracking limitations and optional camera smoke tests.
+**Current status:** validated core contracts, synchronous frame orchestration,
+OpenCV capture, MediaPipe hand landmarks, palm normalization, deterministic geometric
+recognition, and per-hand temporal stabilization are implemented. Core runtime
+imports use only the standard library; install `.[dev,vision]` for camera/model support.
+UI and desktop control remain extension points; there is no full application CLI yet.
+See the [vision integration guide](src/gesture_control/vision/README.md) for model
+setup and camera smoke tests, and the [recognition and temporal integration guide](src/gesture_control/recognition/README.md)
+for thresholds, event ordering, pointer behavior, and limitations.
 
 ## Development
 
