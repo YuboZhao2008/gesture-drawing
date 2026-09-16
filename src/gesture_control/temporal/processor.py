@@ -15,6 +15,9 @@ from gesture_control.core.types import (
     StableGesture,
 )
 
+from .filtering import OneEuroFilter, PointerFilterConfig
+from .motion import MotionConfig
+
 
 @dataclass(frozen=True, slots=True)
 class HistoryConfig:
@@ -51,14 +54,18 @@ class _Track:
     pinched: bool = False
     pointer: tuple[float, float] | None = None
     pointer_time: float = 0.0
+    pointer_filter: OneEuroFilter | None = None
+    pointer_evidence_at: float | None = None
+    pinch_release_since: float | None = None
     history: deque[tuple[float, Gesture, float]] = field(default_factory=deque)
 
 
 class GestureTemporalProcessor:
     """Continuous candidate dwell with confidence gating and distance hysteresis.
 
-    Initial acquisition and every return from absence gate starts for the configured
-    reacquisition delay; dwell runs concurrently. History averages confidence only.
+    Initial acquisition and stroke reacquisition gate starts for the configured
+    delay; dwell runs concurrently. Short POINT dropouts preserve cursor continuity.
+    History averages confidence only; pinch uses shorter start/release dwell caps.
     Missing observations immediately end pinch and suppress holds/pointers; other
     gestures expire at loss grace. Unknown/low confidence must dwell before ending
     an active gesture. Long inter-observation gaps expire even a returning track.
@@ -70,11 +77,16 @@ class GestureTemporalProcessor:
         recognition: RecognitionConfig | None = None,
         smoothing: SmoothingConfig | None = None,
         history: HistoryConfig | None = None,
+        *,
+        pointer_filter: PointerFilterConfig | None = None,
+        motion: MotionConfig | None = None,
     ) -> None:
         self.config = config or TemporalConfig()
         self.recognition = recognition or RecognitionConfig()
         self.smoothing = smoothing or SmoothingConfig()
         self.history_config = history or HistoryConfig()
+        self.pointer_config = pointer_filter or PointerFilterConfig()
+        self.motion = motion or MotionConfig()
         self._tracks: dict[str, _Track] = {}
         self._context: FrameContext | None = None
 
@@ -126,14 +138,20 @@ class GestureTemporalProcessor:
                     )
                 )
             if track.missing:
-                track.eligible_at = now + self.config.reacquisition_delay_s
+                short_gap = now - track.last_seen <= self.motion.pointer_dropout_grace_s
+                if not short_gap:
+                    track.pointer = None
+                    track.pointer_filter = None
+                # Cursor-only continuity is safe; a released stroke still has to
+                # pass full reacquisition protection before it can restart.
+                if not (short_gap and track.stable.gesture is Gesture.POINT):
+                    track.eligible_at = now + self.config.reacquisition_delay_s
                 track.missing = False
             track.last_seen = now
             gesture, confidence = self._evidence(track, hand, by_id[hand.hand_id])
             self._advance(track, gesture, confidence, context, events)
-            if now >= track.eligible_at and track.stable.gesture in (Gesture.POINT, Gesture.PINCH):
-                if gesture == track.stable.gesture:
-                    pointers.append(self._pointer(track, hand, context))
+            if self._pointer_ready(track, hand, gesture, by_id[hand.hand_id], now):
+                pointers.append(self._pointer(track, hand, context))
         return TemporalOutput(
             context, tuple(t.stable for t in self._tracks.values()), tuple(events), tuple(pointers)
         )
@@ -154,7 +172,7 @@ class GestureTemporalProcessor:
         track.candidate = Gesture.NONE
         track.candidate_since = context.timestamp_s
         track.history.clear()
-        track.pointer = None
+        track.pinch_release_since = None
         if track.stable.gesture is Gesture.PINCH:
             self._transition(track, Gesture.NONE, 0, context, events)
 
@@ -171,7 +189,6 @@ class GestureTemporalProcessor:
             return Gesture.PINCH, min(
                 hand.confidence, max(track.stable.confidence, cfg.min_confidence)
             )
-        track.pinched = False
         if prediction.confidence < cfg.min_confidence:
             return Gesture.UNKNOWN, prediction.confidence
         if prediction.gesture is Gesture.PINCH:
@@ -179,6 +196,34 @@ class GestureTemporalProcessor:
                 return Gesture.UNKNOWN, 0
             track.pinched = True
         return prediction.gesture, prediction.confidence
+
+    def _pointer_ready(
+        self,
+        track: _Track,
+        hand: HandLandmarks,
+        gesture: Gesture,
+        prediction: GesturePrediction,
+        now: float,
+    ) -> bool:
+        if now < track.eligible_at or hand.confidence < self.recognition.min_confidence:
+            return False
+        stable = track.stable.gesture
+        if stable not in (Gesture.POINT, Gesture.PINCH):
+            return False
+        if gesture == stable:
+            track.pointer_evidence_at = now
+            return True
+        # Only cursor motion tolerates classification noise. Never extend drawing
+        # from evidence that may be an opening pinch or an untrusted fingertip.
+        return (
+            stable is Gesture.POINT
+            and track.pointer_evidence_at is not None
+            and (
+                prediction.confidence >= self.recognition.min_confidence
+                or prediction.pinch_distance is not None
+            )
+            and now - track.pointer_evidence_at <= self.motion.pointer_noise_grace_s
+        )
 
     def _advance(
         self,
@@ -198,7 +243,23 @@ class GestureTemporalProcessor:
         if gesture != track.candidate:
             track.candidate = gesture
             track.candidate_since = now
-        ready = now - track.candidate_since + 1e-12 >= self.config.gesture_dwell_s
+        dwell = self.config.gesture_dwell_s
+        if gesture is Gesture.PINCH:
+            dwell = min(dwell, self.motion.pinch_start_s)
+        elif track.stable.gesture is Gesture.PINCH and gesture is Gesture.POINT:
+            dwell = min(dwell, self.motion.pinch_release_s)
+        ready = now - track.candidate_since + 1e-12 >= dwell
+        # Release evidence may alternate UNKNOWN/POINT/FIST: its timer must not
+        # restart with each label, otherwise a genuinely opened pinch can stick.
+        if track.stable.gesture is Gesture.PINCH and gesture is not Gesture.PINCH:
+            if track.pinch_release_since is None:
+                track.pinch_release_since = now
+            if now - track.pinch_release_since + 1e-12 >= min(
+                self.config.gesture_dwell_s, self.motion.pinch_release_s
+            ) and not (ready and gesture is Gesture.POINT):
+                self._transition(track, Gesture.UNKNOWN, 0, context, events)
+        else:
+            track.pinch_release_since = None
         if ready and now + 1e-12 >= track.eligible_at:
             samples = [
                 c for t, g, c in track.history if g == gesture and t >= track.candidate_since
@@ -255,6 +316,8 @@ class GestureTemporalProcessor:
                     )
                 )
         track.stable = StableGesture(old.hand_id, gesture, confidence, now)
+        if gesture is not Gesture.PINCH:
+            track.pinched = False
         track.last_held = now
         if gesture not in (Gesture.NONE, Gesture.UNKNOWN):
             events.append(
@@ -268,7 +331,11 @@ class GestureTemporalProcessor:
     def _pointer(self, track: _Track, hand: HandLandmarks, context: FrameContext) -> PointerEvent:
         tip = hand.landmarks[8]
         x, y = max(0.0, min(1.0, tip.x)), max(0.0, min(1.0, tip.y))
-        if track.pointer is not None and self.smoothing.enabled:
+        if self.smoothing.enabled and self.pointer_config.adaptive:
+            if track.pointer_filter is None:
+                track.pointer_filter = OneEuroFilter(self.pointer_config)
+            x, y = track.pointer_filter.filter(x, y, context.timestamp_s)
+        elif track.pointer is not None and self.smoothing.enabled:
             # Core alpha at a 30 Hz reference rate, preserving the time constant.
             alpha = 1 - (1 - self.smoothing.alpha) ** (
                 30 * (context.timestamp_s - track.pointer_time)

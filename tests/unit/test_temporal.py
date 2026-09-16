@@ -16,15 +16,23 @@ from gesture_control.core.types import (
     HandLandmarks,
     Landmark3D,
 )
-from gesture_control.temporal import GestureTemporalProcessor, HistoryConfig
+from gesture_control.temporal import GestureTemporalProcessor, HistoryConfig, PointerFilterConfig
 
 
 class Stream:
     def __init__(
-        self, *, dwell: float = 0.12, delay: float = 0, grace: float = 0.15, smoothing: bool = False
+        self,
+        *,
+        dwell: float = 0.12,
+        delay: float = 0,
+        grace: float = 0.15,
+        smoothing: bool = False,
+        adaptive: bool = True,
     ) -> None:
         self.processor: TemporalProcessor = GestureTemporalProcessor(
-            TemporalConfig(dwell, delay, grace, 0.1), smoothing=SmoothingConfig(enabled=smoothing)
+            TemporalConfig(dwell, delay, grace, 0.1),
+            smoothing=SmoothingConfig(enabled=smoothing),
+            pointer_filter=PointerFilterConfig(adaptive=adaptive),
         )
         self.frame_id = 0
 
@@ -192,7 +200,7 @@ def test_multiple_tracks_are_isolated_and_missing_track_ends() -> None:
 
 def test_pointer_clipping_and_time_based_smoothing() -> None:
     def endpoint(times: list[float]) -> float:
-        stream = Stream(dwell=0, smoothing=True)
+        stream = Stream(dwell=0, smoothing=True, adaptive=False)
         stream.step(0, x=0)
         out = stream.step(times[0], x=1)
         for time in times[1:]:
@@ -260,3 +268,135 @@ def test_hand_confidence_gates_pinch_distance() -> None:
     )
     assert kinds(out) == [E.GESTURE_ENDED, E.PINCH_ENDED]
     assert not out.pointer_events
+
+
+@pytest.mark.parametrize(
+    "noise", [Gesture.FIST, Gesture.OPEN_PALM, Gesture.TWO_FINGER, Gesture.UNKNOWN]
+)
+def test_single_bad_label_does_not_freeze_cursor_or_change_point(noise: Gesture) -> None:
+    stream = Stream(smoothing=True)
+    for time in (0, 0.06, 0.12):
+        stream.step(time)
+    out = stream.step(
+        0.15, noise, confidence=0.2 if noise is Gesture.UNKNOWN else 0.9, distance=0.6, x=0.51
+    )
+    assert out.stable_gestures[0].gesture is Gesture.POINT
+    assert E.GESTURE_ENDED not in kinds(out)
+    assert len(out.pointer_events) == 1
+    assert len(stream.step(0.18, x=0.52).pointer_events) == 1
+
+
+def test_cursor_noise_tolerance_is_bounded() -> None:
+    stream = Stream()
+    for time in (0, 0.06, 0.12):
+        stream.step(time)
+    assert stream.step(0.15, Gesture.UNKNOWN, confidence=0.2, distance=0.6).pointer_events
+    assert not stream.step(0.20, Gesture.UNKNOWN, confidence=0.2, distance=0.6).pointer_events
+    out = stream.step(0.28, Gesture.UNKNOWN, confidence=0.2, distance=0.6)
+    assert out.stable_gestures[0].gesture is Gesture.UNKNOWN
+
+
+def test_short_point_dropout_preserves_filter_and_resumes_without_delay() -> None:
+    stream = Stream(delay=0.2, smoothing=True)
+    for time in (0, 0.1, 0.2):
+        stream.step(time)
+    missing = stream.step(0.22, None)
+    assert not missing.pointer_events
+    returned = stream.step(0.25, x=0.51)
+    assert returned.stable_gestures[0].gesture is Gesture.POINT
+    assert len(returned.pointer_events) == 1
+    assert 0.5 < returned.pointer_events[0].x < 0.51  # Filter was not reseeded.
+    assert E.HAND_ACQUIRED not in kinds(returned)
+
+
+def test_long_point_dropout_and_new_id_do_not_reuse_cursor_state() -> None:
+    stream = Stream(delay=0.1, smoothing=True)
+    for time in (0, 0.06, 0.12):
+        stream.step(time)
+    stream.step(0.14, None)
+    assert not stream.step(0.23, x=0.9).pointer_events  # >80 ms, still within loss grace.
+    stream.step(0.29, x=0.9)
+    returned = stream.step(0.35, x=0.9)
+    assert returned.pointer_events[0].x == 0.9
+    assert not stream.step(0.38, hand_id="new", x=0.1).pointer_events
+
+
+@pytest.mark.parametrize("rate", [30, 60])
+def test_pinch_start_and_release_latency(rate: int) -> None:
+    stream = Stream()
+    for i in range(rate):
+        stream.step(i / rate)
+    started: float | None = None
+    ended: float | None = None
+    for i in range(rate, rate * 2):
+        out = stream.step(i / rate, Gesture.PINCH, distance=0.24)
+        if E.PINCH_STARTED in kinds(out):
+            started = i / rate
+    for i in range(rate * 2, rate * 3):
+        out = stream.step(i / rate, Gesture.POINT, distance=0.36)
+        if E.PINCH_ENDED in kinds(out):
+            ended = i / rate
+            assert kinds(out)[:3] == [E.GESTURE_ENDED, E.PINCH_ENDED, E.GESTURE_STARTED]
+    assert started is not None and ended is not None
+    assert 0.04 <= started - 1 <= 0.04 + 1 / rate
+    assert 0.04 <= ended - 2 <= 0.04 + 1 / rate
+
+
+def test_single_exit_spike_recovers_inside_hysteresis_band() -> None:
+    stream = Stream(dwell=0.1)
+    stream.step(0, Gesture.PINCH, distance=0.24)
+    stream.step(0.05, Gesture.PINCH, distance=0.24)
+    stream.step(0.07, Gesture.POINT, distance=0.36)
+    for time in (0.09, 0.11, 0.13, 0.15):
+        out = stream.step(time, Gesture.UNKNOWN, confidence=0, distance=0.30)
+        assert out.stable_gestures[0].gesture is Gesture.PINCH
+        assert E.PINCH_ENDED not in kinds(out)
+
+
+def test_alternating_release_labels_cannot_keep_drawing_active() -> None:
+    stream = Stream()
+    stream.step(0, Gesture.PINCH, distance=0.1)
+    stream.step(0.05, Gesture.PINCH, distance=0.1)
+    stream.step(0.08, Gesture.UNKNOWN, confidence=0, distance=0.5)
+    stream.step(0.10, Gesture.FIST, distance=0.5)
+    out = stream.step(0.12, Gesture.POINT, distance=0.5)
+    assert kinds(out) == [E.GESTURE_ENDED, E.PINCH_ENDED]
+    assert out.stable_gestures[0].gesture is Gesture.UNKNOWN
+    assert not out.pointer_events
+
+
+def test_pinch_band_oscillation_and_single_frame_false_start() -> None:
+    stream = Stream()
+    for time in (0, 0.06, 0.12):
+        stream.step(time)
+    stream.step(0.14, Gesture.PINCH, distance=0.24)
+    assert E.PINCH_STARTED not in kinds(stream.step(0.16, Gesture.POINT, distance=0.4))
+    stream.step(0.20, Gesture.PINCH, distance=0.24)
+    out = stream.step(0.25, Gesture.PINCH, distance=0.24)
+    assert E.PINCH_STARTED in kinds(out)
+    for i in range(20):
+        out = stream.step(
+            0.27 + i * 0.02, Gesture.UNKNOWN, confidence=0, distance=0.26 if i % 2 else 0.34
+        )
+        assert E.PINCH_ENDED not in kinds(out)
+
+
+def test_pointer_filters_are_isolated_by_track_and_reset() -> None:
+    processor = GestureTemporalProcessor(TemporalConfig(0, 0, 0.15, 0.1))
+
+    def step(time: float, frame_id: int, ax: float, bx: float) -> TemporalOutput:
+        hands = tuple(
+            HandLandmarks(name, tuple(Landmark3D(x, 0.5) for _ in range(21)))
+            for name, x in (("a", ax), ("b", bx))
+        )
+        return processor.process(
+            HandFrame(FrameContext(frame_id, time, 640, 480), hands),
+            tuple(GesturePrediction(h.hand_id, Gesture.POINT, 0.9) for h in hands),
+        )
+
+    step(0, 0, 0.1, 0.9)
+    out = step(0.03, 1, 0.15, 0.9)
+    assert 0.1 < out.pointer_events[0].x < 0.15
+    assert out.pointer_events[1].x == 0.9
+    processor.reset()
+    assert step(0, 0, 0.8, 0.2).pointer_events[0].x == 0.8
