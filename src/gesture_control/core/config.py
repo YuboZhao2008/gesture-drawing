@@ -55,14 +55,24 @@ class TemporalConfig:
 
 @dataclass(frozen=True, slots=True)
 class SmoothingConfig:
+    """Pointer smoothing; alpha is the legacy EMA weight when adaptive is false."""
+
     enabled: bool = True
     alpha: float = 0.35
+    adaptive: bool = True
+    min_cutoff: float = 1.5
+    beta: float = 20.0
+    derivative_cutoff: float = 1.0
 
     def __post_init__(self) -> None:
         validate.boolean("smoothing.enabled", self.enabled)
         validate.real("smoothing.alpha", self.alpha, minimum=0, maximum=1)
         if self.alpha == 0:
             raise ValueError("smoothing.alpha must be > 0")
+        validate.boolean("smoothing.adaptive", self.adaptive)
+        validate.positive("smoothing.min_cutoff", self.min_cutoff)
+        validate.real("smoothing.beta", self.beta, minimum=0)
+        validate.positive("smoothing.derivative_cutoff", self.derivative_cutoff)
 
 
 @dataclass(frozen=True, slots=True)

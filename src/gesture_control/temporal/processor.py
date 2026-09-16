@@ -85,7 +85,12 @@ class GestureTemporalProcessor:
         self.recognition = recognition or RecognitionConfig()
         self.smoothing = smoothing or SmoothingConfig()
         self.history_config = history or HistoryConfig()
-        self.pointer_config = pointer_filter or PointerFilterConfig()
+        self.pointer_config = pointer_filter or PointerFilterConfig(
+            adaptive=self.smoothing.adaptive,
+            min_cutoff=self.smoothing.min_cutoff,
+            beta=self.smoothing.beta,
+            derivative_cutoff=self.smoothing.derivative_cutoff,
+        )
         self.motion = motion or MotionConfig()
         self._tracks: dict[str, _Track] = {}
         self._context: FrameContext | None = None
@@ -189,6 +194,10 @@ class GestureTemporalProcessor:
             return Gesture.PINCH, min(
                 hand.confidence, max(track.stable.confidence, cfg.min_confidence)
             )
+        # Only an accepted pinch may survive an exit spike during release dwell.
+        # A rejected candidate must enter again before it can start a stroke.
+        if track.stable.gesture is not Gesture.PINCH:
+            track.pinched = False
         if prediction.confidence < cfg.min_confidence:
             return Gesture.UNKNOWN, prediction.confidence
         if prediction.gesture is Gesture.PINCH:
