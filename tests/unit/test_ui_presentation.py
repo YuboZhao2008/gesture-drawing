@@ -205,6 +205,7 @@ def test_present_pumps_once_and_cleans_up(
         return 0 if exit_mode == "window" else 1
 
     monkeypatch.setattr(cv2, "namedWindow", lambda *args: calls.append("create"))
+    monkeypatch.setattr(cv2, "resizeWindow", lambda *args: calls.append("resize"))
     monkeypatch.setattr(cv2, "imshow", lambda *args: calls.append("show"))
     monkeypatch.setattr(cv2, "destroyWindow", lambda *args: calls.append("destroy"))
     monkeypatch.setattr(cv2, "getWindowProperty", visible)
@@ -225,7 +226,7 @@ def test_present_pumps_once_and_cleans_up(
     monkeypatch.setattr(ui, "handle_key", handle_once)
     running = ui.present(np.zeros((480, 640, 3), dtype=np.uint8))
     assert dispatches == [key]
-    assert calls[:3] == ["create", "show", "poll" if poll_available else "wait"]
+    assert calls[:4] == ["create", "resize", "show", "poll" if poll_available else "wait"]
     assert running == (exit_mode == "continue")
     if exit_mode != "key":
         assert ui.diagnostics  # The D key reached the centralized handler once.
@@ -237,3 +238,32 @@ def test_present_pumps_once_and_cleans_up(
     ui.close()
     ui.close()
     assert calls.count("destroy") == 1
+
+
+def test_present_reports_elapsed_fps_and_sizes_window_only_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from gesture_control.ui import demo
+
+    timestamps = [0.0]
+    for index in range(30):
+        timestamps.append(timestamps[-1] + (0.01 if index % 2 == 0 else 2 / 30 - 0.01))
+    clock = iter(timestamps)
+    monkeypatch.setattr(demo, "perf_counter", lambda: next(clock))
+    sizes: list[tuple[int, int]] = []
+    monkeypatch.setattr(cv2, "namedWindow", lambda *args: None)
+    monkeypatch.setattr(cv2, "resizeWindow", lambda name, w, h: sizes.append((w, h)))
+    monkeypatch.setattr(cv2, "imshow", lambda *args: None)
+    monkeypatch.setattr(cv2, "getWindowProperty", lambda *args: 1)
+    monkeypatch.setattr(cv2, "pollKey", lambda: -1, raising=False)
+    monkeypatch.setattr(cv2, "destroyWindow", lambda *args: None)
+    ui = DemoUI(calibration_path=tmp_path / "none.json")
+    image = np.zeros((480, 640, 3), dtype=np.uint8)
+    rendered = ui.render(image)
+    monkeypatch.setattr(ui, "render", lambda image: rendered)
+    for _ in timestamps:
+        assert ui.present(image)
+    # Thirty frames across one second, despite alternating fast/slow intervals.
+    assert ui.fps == pytest.approx(30)
+    assert sizes == [(rendered.shape[1], rendered.shape[0])]
+    ui.close()

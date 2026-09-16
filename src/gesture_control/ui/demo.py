@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from enum import StrEnum
 from pathlib import Path
 from time import perf_counter
@@ -63,6 +64,7 @@ class DemoUI:
         self.output: TemporalOutput | None = None
         self.pointer: Point | None = None
         self.fps = 0.0
+        self._frame_periods: deque[float] = deque(maxlen=30)
         self._last_present: float | None = None
         self._window_open = False
         self.window_name = "Gesture Studio"
@@ -188,13 +190,19 @@ class DemoUI:
             return False
         now = perf_counter()
         if self._last_present is not None and now > self._last_present:
-            measured = 1 / (now - self._last_present)
-            self.fps = measured if self.fps == 0 else 0.15 * measured + 0.85 * self.fps
+            # Average elapsed periods, not reciprocal FPS: bursty delivery must
+            # not inflate the badge above the actual display throughput.
+            self._frame_periods.append(now - self._last_present)
+            self.fps = len(self._frame_periods) / sum(self._frame_periods)
         self._last_present = now
+        rendered = self.render(image)
         if not self._window_open:
             cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
             self._window_open = True
-        cv2.imshow(self.window_name, self.render(image))
+            # HighGUI can restore a collapsed native window on Windows. Set a
+            # useful initial client size once, preserving subsequent user resizing.
+            cv2.resizeWindow(self.window_name, rendered.shape[1], rendered.shape[0])
+        cv2.imshow(self.window_name, rendered)
         poll_key = getattr(cv2, "pollKey", None)
         self.handle_key(poll_key() if callable(poll_key) else cv2.waitKey(1))
         try:
