@@ -1,0 +1,28 @@
+# Defaults are starting points, not calibrated or validated operating thresholds.
+debug = false
+
+[camera]
+index = 0
+target_fps = 30.0
+min_detection_confidence = 0.5
+
+[recognition]
+min_confidence = 0.7
+# Thumb-tip to index-tip distance in canonical palm units.
+pinch_enter_threshold = 0.25
+pinch_exit_threshold = 0.35
+
+[temporal]
+gesture_dwell_s = 0.12
+reacquisition_delay_s = 0.2
+hand_loss_grace_s = 0.15
+held_interval_s = 0.1
+
+[smoothing]
+enabled = true
+# Exponential smoothing weight assigned to the newest pointer observation.
+alpha = 0.35
+
+[workspace]
+width = 1920
+height = 1080
