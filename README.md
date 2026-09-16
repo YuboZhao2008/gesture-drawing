@@ -9,11 +9,13 @@ Camera → hand landmarks → normalized landmarks → gesture predictions
        → temporal filtering / sequences → commands → output adapters
 ```
 
-**Current status:** architecture and contracts only. The package provides validated
-data types, configuration loading, structural interfaces, and synchronous frame
-orchestration. Camera backends, classifiers, temporal state machines, desktop input,
-training, and UI are extension points; none are implemented yet. Runtime dependencies
-are limited to the Python standard library. There is no camera demo or CLI yet.
+**Current status:** shared contracts and a working optional vision layer. The package
+provides validated data types, configuration loading, synchronous frame orchestration,
+OpenCV capture, MediaPipe hand landmarks, canonical normalization and debug overlays.
+Classifiers, temporal processing, desktop input, training and UI remain extension points.
+Core runtime dependencies are limited to the standard library; install `.[dev,vision]`
+for camera/model support. See [vision integration](src/gesture_control/vision/README.md)
+for model setup, public APIs, tracking limitations and optional camera smoke tests.
 
 ## Development
 
