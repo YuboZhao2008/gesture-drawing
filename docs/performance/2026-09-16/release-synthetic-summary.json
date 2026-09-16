@@ -1,0 +1,162 @@
+[
+  {
+    "mode": "before",
+    "trial": 1,
+    "source_revision": "dd16f99 + timing instrumentation + initial window geometry normalization",
+    "fps": 108.44539739297745,
+    "frame_p95_ms": 13.398,
+    "render_ms": 8.790930333333334,
+    "capture_ms": null,
+    "detection_ms": null,
+    "event_pump_ms": null,
+    "observations": {
+      "frames": 0,
+      "frames_with_hands": 0
+    },
+    "report": "release-synthetic-before-1.json"
+  },
+  {
+    "mode": "after",
+    "trial": 1,
+    "source_revision": "10bc59935cbce29bcb31df93e79776616d9177dd",
+    "fps": 373.8002724505586,
+    "frame_p95_ms": 3.4885,
+    "render_ms": 2.3583184444444445,
+    "capture_ms": null,
+    "detection_ms": null,
+    "event_pump_ms": null,
+    "observations": {
+      "frames": 0,
+      "frames_with_hands": 0
+    },
+    "report": "release-synthetic-after-1.json"
+  },
+  {
+    "mode": "after",
+    "trial": 2,
+    "source_revision": "10bc59935cbce29bcb31df93e79776616d9177dd",
+    "fps": 372.73536861477913,
+    "frame_p95_ms": 3.5387,
+    "render_ms": 2.3728248888888888,
+    "capture_ms": null,
+    "detection_ms": null,
+    "event_pump_ms": null,
+    "observations": {
+      "frames": 0,
+      "frames_with_hands": 0
+    },
+    "report": "release-synthetic-after-2.json"
+  },
+  {
+    "mode": "before",
+    "trial": 2,
+    "source_revision": "dd16f99 + timing instrumentation + initial window geometry normalization",
+    "fps": 106.21750666323072,
+    "frame_p95_ms": 13.7253,
+    "render_ms": 8.971051888888889,
+    "capture_ms": null,
+    "detection_ms": null,
+    "event_pump_ms": null,
+    "observations": {
+      "frames": 0,
+      "frames_with_hands": 0
+    },
+    "report": "release-synthetic-before-2.json"
+  },
+  {
+    "mode": "before",
+    "trial": 3,
+    "source_revision": "dd16f99 + timing instrumentation + initial window geometry normalization",
+    "fps": 107.58004065593177,
+    "frame_p95_ms": 13.5231,
+    "render_ms": 8.859538888888888,
+    "capture_ms": null,
+    "detection_ms": null,
+    "event_pump_ms": null,
+    "observations": {
+      "frames": 0,
+      "frames_with_hands": 0
+    },
+    "report": "release-synthetic-before-3.json"
+  },
+  {
+    "mode": "after",
+    "trial": 3,
+    "source_revision": "10bc59935cbce29bcb31df93e79776616d9177dd",
+    "fps": 364.98278883105627,
+    "frame_p95_ms": 3.6444,
+    "render_ms": 2.422503444444444,
+    "capture_ms": null,
+    "detection_ms": null,
+    "event_pump_ms": null,
+    "observations": {
+      "frames": 0,
+      "frames_with_hands": 0
+    },
+    "report": "release-synthetic-after-3.json"
+  },
+  {
+    "mode": "after",
+    "trial": 4,
+    "source_revision": "10bc59935cbce29bcb31df93e79776616d9177dd",
+    "fps": 372.7157648456727,
+    "frame_p95_ms": 3.5971,
+    "render_ms": 2.369225111111111,
+    "capture_ms": null,
+    "detection_ms": null,
+    "event_pump_ms": null,
+    "observations": {
+      "frames": 0,
+      "frames_with_hands": 0
+    },
+    "report": "release-synthetic-after-4.json"
+  },
+  {
+    "mode": "before",
+    "trial": 4,
+    "source_revision": "dd16f99 + timing instrumentation + initial window geometry normalization",
+    "fps": 107.96531894838611,
+    "frame_p95_ms": 12.8823,
+    "render_ms": 8.816390333333333,
+    "capture_ms": null,
+    "detection_ms": null,
+    "event_pump_ms": null,
+    "observations": {
+      "frames": 0,
+      "frames_with_hands": 0
+    },
+    "report": "release-synthetic-before-4.json"
+  },
+  {
+    "mode": "before",
+    "trial": 5,
+    "source_revision": "dd16f99 + timing instrumentation + initial window geometry normalization",
+    "fps": 107.87212924097479,
+    "frame_p95_ms": 13.5343,
+    "render_ms": 8.833332333333333,
+    "capture_ms": null,
+    "detection_ms": null,
+    "event_pump_ms": null,
+    "observations": {
+      "frames": 0,
+      "frames_with_hands": 0
+    },
+    "report": "release-synthetic-before-5.json"
+  },
+  {
+    "mode": "after",
+    "trial": 5,
+    "source_revision": "10bc59935cbce29bcb31df93e79776616d9177dd",
+    "fps": 381.27735029526116,
+    "frame_p95_ms": 3.4278,
+    "render_ms": 2.317568888888889,
+    "capture_ms": null,
+    "detection_ms": null,
+    "event_pump_ms": null,
+    "observations": {
+      "frames": 0,
+      "frames_with_hands": 0
+    },
+    "report": "release-synthetic-after-5.json"
+  }
+]

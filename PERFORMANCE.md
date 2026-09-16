@@ -1,5 +1,9 @@
 # Performance review and benchmark procedure
 
+This is the initial architect's review. The changes it recommends have since been
+integrated; see [the release measurements and validation](docs/POLISH_RELEASE.md)
+for the final implementation, repeated comparisons, and remaining manual checks.
+
 Review target: `dd16f99ff585027ef09a71f1d9b3b3bd8332e94b` on Windows, Python
 3.12.10, OpenCV 4.14.0, MediaPipe 0.10.35, NumPy 2.5.3. Camera backend reported
 MSMF, 640x480, 30 FPS, buffer size 1; OpenCV reported 22 threads. A reported

@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "warmup_frames": 60,
+  "measured_frames": 900,
+  "retained_frames": 900,
+  "failed_frames": 0,
+  "effective_fps": 20.472251765513914,
+  "window_elapsed_s": 43.9619447,
+  "frames_over_33_333_ms": 857,
+  "stages": {
+    "buffer_fill": {
+      "mean_ms": 5.174617111111111,
+      "p50_ms": 4.7959,
+      "p95_ms": 8.1919,
+      "p99_ms": 9.4235,
+      "max_ms": 11.7241,
+      "active_frames": 900,
+      "calls": 1800
+    },
+    "canvas_render": {
+      "mean_ms": 1.5380390000000002,
+      "p50_ms": 1.3797,
+      "p95_ms": 2.2537,
+      "p99_ms": 3.1078,
+      "max_ms": 3.5398,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "capture": {
+      "mean_ms": 13.252148111111111,
+      "p50_ms": 13.0888,
+      "p95_ms": 30.8044,
+      "p99_ms": 46.8837,
+      "max_ms": 66.1446,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "color_conversion": {
+      "mean_ms": 0.08858311111111111,
+      "p50_ms": 0.0788,
+      "p95_ms": 0.1641,
+      "p99_ms": 0.2229,
+      "max_ms": 0.3118,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "detection": {
+      "mean_ms": 21.482572444444447,
+      "p50_ms": 21.7249,
+      "p95_ms": 29.5202,
+      "p99_ms": 34.5563,
+      "max_ms": 38.2039,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "frame": {
+      "mean_ms": 48.83925777777778,
+      "p50_ms": 47.0301,
+      "p95_ms": 67.469,
+      "p99_ms": 83.4209,
+      "max_ms": 103.2335,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "imshow": {
+      "mean_ms": 0.4009236666666667,
+      "p50_ms": 0.3844,
+      "p95_ms": 0.5712,
+      "p99_ms": 0.6913,
+      "max_ms": 0.9509,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "inference": {
+      "mean_ms": 21.10781811111111,
+      "p50_ms": 21.359,
+      "p95_ms": 29.186,
+      "p99_ms": 34.1865,
+      "max_ms": 37.4299,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "key_handler": {
+      "mean_ms": 0.006706777777777778,
+      "p50_ms": 0.006,
+      "p95_ms": 0.0084,
+      "p99_ms": 0.0125,
+      "max_ms": 0.1704,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "layout": {
+      "mean_ms": 6.229195333333334,
+      "p50_ms": 5.8508,
+      "p95_ms": 9.4657,
+      "p99_ms": 10.8053,
+      "max_ms": 15.1445,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "mapping": {
+      "mean_ms": 0.0041177777777777775,
+      "p50_ms": 0.0038,
+      "p95_ms": 0.0059,
+      "p99_ms": 0.0066,
+      "max_ms": 0.0414,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "observation": {
+      "mean_ms": 0.00960811111111111,
+      "p50_ms": 0.0092,
+      "p95_ms": 0.013,
+      "p99_ms": 0.0168,
+      "max_ms": 0.041,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "present": {
+      "mean_ms": 13.992317111111111,
+      "p50_ms": 11.9734,
+      "p95_ms": 24.4206,
+      "p99_ms": 26.6863,
+      "max_ms": 31.7778,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "recognition": {
+      "mean_ms": 0.0020670000000000003,
+      "p50_ms": 0.0019,
+      "p95_ms": 0.0031,
+      "p99_ms": 0.0036,
+      "max_ms": 0.0094,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "render": {
+      "mean_ms": 9.688973444444445,
+      "p50_ms": 9.3617,
+      "p95_ms": 13.5485,
+      "p99_ms": 15.2572,
+      "max_ms": 18.9179,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "resize": {
+      "mean_ms": 1.734895888888889,
+      "p50_ms": 1.5255,
+      "p95_ms": 2.681,
+      "p99_ms": 3.0007,
+      "max_ms": 4.6216,
+      "active_frames": 900,
+      "calls": 1800
+    },
+    "temporal": {
+      "mean_ms": 0.023232,
+      "p50_ms": 0.0213,
+      "p95_ms": 0.032,
+      "p99_ms": 0.0494,
+      "max_ms": 0.2115,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "text_raster": {
+      "mean_ms": 0.27925788888888886,
+      "p50_ms": 0.2574,
+      "p95_ms": 0.476,
+      "p99_ms": 0.5229,
+      "max_ms": 0.609,
+      "active_frames": 900,
+      "calls": 6300
+    },
+    "wait_key": {
+      "mean_ms": 3.6636889999999998,
+      "p50_ms": 1.3758,
+      "p95_ms": 14.9598,
+      "p99_ms": 16.8663,
+      "max_ms": 17.1792,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "window_poll": {
+      "mean_ms": 0.010197111111111112,
+      "p50_ms": 0.009,
+      "p95_ms": 0.0163,
+      "p99_ms": 0.0239,
+      "max_ms": 0.0667,
+      "active_frames": 900,
+      "calls": 900
+    }
+  },
+  "metadata": {
+    "source_sha256": {
+      "__init__.py": "c1938bec9e1b98fdb3862ce38b510630c69ce4d0352a2da13f6ad79c3f2bf986",
+      "__main__.py": "3f4d6d62370d1a3dc61b5d0f9e1e29d9b37f99201e807f41c35fef9bf9d32ff7",
+      "app.py": "a30039d8902180f7978b7674c617119ade75b3586825bea1accade7caee0eee6",
+      "control\\__init__.py": "7ed0cdeba954fe04b2ac636745d31e38bc1eafb145e69c5eab316b107294d8ea",
+      "control\\adapters\\__init__.py": "4cd93eb1f93cd566070c4bca210f535c1b0c9e362cdb82788094a6d00d4e29de",
+      "core\\__init__.py": "6d052930fca591afb1ec0478f343bd438d83609718920f94363f681fe5633d46",
+      "core\\_validation.py": "6458a9953e29f79acbad5ef7a097a90fe2f2d92c6f5e614638521b9c90ff6e37",
+      "core\\config.py": "e28a675e3c71eb0fd623eb63998940f730901c91daa576b56805098e6122b165",
+      "core\\events.py": "ca3efec6d19bd98678953c1d7f0f5b8b909d60dbac9c3b5ed581b8d32276e900",
+      "core\\performance.py": "ad463ac589ea87a2fb8c85dc78d89402584f8fcb7990d72b4805c2c85f7ef12e",
+      "core\\protocols.py": "4811e35e8569e7d73e5279cb6e2b2fbcd531c408c0b9b1b1847fda1ba544262b",
+      "core\\types.py": "4f36fe52bfea35572134e35e441617fb0475e1d06a1e973546a47723472db323",
+      "profiling.py": "20d5d64dabdf38171851ce232d8110b36422a12db29cd7bb8a37da710fe45c22",
+      "recognition\\__init__.py": "cdf1c0c6911abcf2192c8fd0db6648ad2fbd674fe31f1c0562a5e745bd3a89e4",
+      "recognition\\geometric.py": "542333bd7d6aad1f0fb2c02fba459a47e9a08243ed74620c3b91307665485e88",
+      "recognition\\geometry.py": "96dbd37e566c1019263147f1db7c8710bbf818688503db04f2001bd49c7ff13c",
+      "runner.py": "eb218d6f1487e1aecc852d46cbd2d42899176be0d7dade5c56f33d7452716f7c",
+      "temporal\\__init__.py": "f31b6ae9c27e2086075e58dfbb0e9c29c631d68acedc429b2d8c71b6e4a27084",
+      "temporal\\processor.py": "7d93b73659bbaffed20c34b67c42162c015de5994ab8a064a86a4565058d8128",
+      "training\\__init__.py": "c416855586b4bf98a8396b9b8cde4fcffd6d26de52ad9791640df104f64a6b89",
+      "ui\\__init__.py": "d38fd2e249a5f370d42788aecb123aa01cc6dfff0ccbbf1d0ff5236ab8caac9f",
+      "ui\\calibration.py": "2edac24492fd891e457a408b5a4e78ab165ba484636e021a46a73ca9bdad41e3",
+      "ui\\demo.py": "27ec0e19b38c13eb738f80e5e2a15b8bfdd5e250b37b8587e103ea1eb057c24a",
+      "ui\\drawing.py": "68d05398eceda6d1bfed22a5c499f0390d011973c9a995285cb147ee3a5cbdeb",
+      "ui\\overlay.py": "b3311d4abb9e1a52f7de6f3485a291fe409134eabcce751fcd2698fa91601344",
+      "vision\\__init__.py": "b40b332c34d56b61a9a46dacffa42b72f0518ee57184d35bff22d5234f81954f",
+      "vision\\camera.py": "68de561f5f9da1ec8132e35e7f6f2ebecd578bceabe0081a3907763f6833adf4",
+      "vision\\debug.py": "6f8622df04a701fd14cbe71df0c853d71905816b976d53142b531c8bbf4f9814",
+      "vision\\detector.py": "0ef195ad6da469f961c8bade2a34a83b0386b7a9048b8dbc0e4b3a78188e8759",
+      "vision\\geometry.py": "31b0ae408bf2c5395569c53ad2a03aec2eb0605575f93b5a21d3533f0eadd7e2",
+      "vision\\smoke.py": "39b0df2c7353d2bcf364dcd69ee9b0e70b68f0e9d9671ff7fa8439a58cf7e4a3"
+    },
+    "opencv_threads": 22,
+    "camera": {
+      "backend": "MSMF",
+      "reported_fps": 30.0,
+      "width": 640.0,
+      "height": 480.0,
+      "reported_buffer_size": 1.0
+    },
+    "observations_including_warmup": {
+      "frames": 960,
+      "frames_with_hands": 0
+    }
+  },
+  "environment": {
+    "python": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "dependencies": {
+      "numpy": "2.5.3",
+      "opencv-contrib-python": "4.14.0.94",
+      "mediapipe": "0.10.35"
+    },
+    "config": {
+      "camera": {
+        "index": 0,
+        "target_fps": 30.0,
+        "min_detection_confidence": 0.5
+      },
+      "recognition": {
+        "min_confidence": 0.7,
+        "pinch_enter_threshold": 0.25,
+        "pinch_exit_threshold": 0.35
+      },
+      "temporal": {
+        "gesture_dwell_s": 0.12,
+        "reacquisition_delay_s": 0.2,
+        "hand_loss_grace_s": 0.15,
+        "held_interval_s": 0.1
+      },
+      "smoothing": {
+        "enabled": true,
+        "alpha": 0.35
+      },
+      "workspace": {
+        "width": 1920,
+        "height": 1080
+      },
+      "debug": false
+    },
+    "headless": false,
+    "model": "C:\\Users\\USER\\OneDrive\\Desktop\\gesture-control\\models\\hand_landmarker.task"
+  }
+}

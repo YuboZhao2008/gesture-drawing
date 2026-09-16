@@ -1,0 +1,50 @@
+[
+  {
+    "mode": "after",
+    "trial": 1,
+    "source_revision": "10bc59935cbce29bcb31df93e79776616d9177dd",
+    "fps": 27.021973106585435,
+    "frame_p95_ms": 55.8756,
+    "render_ms": 3.3142168888888888,
+    "capture_ms": 10.424703777777777,
+    "detection_ms": 21.26435788888889,
+    "event_pump_ms": 1.2524331111111113,
+    "observations": {
+      "frames": 960,
+      "frames_with_hands": 0
+    },
+    "report": "release-live-synchronous-after-1.json"
+  },
+  {
+    "mode": "after",
+    "trial": 2,
+    "source_revision": "10bc59935cbce29bcb31df93e79776616d9177dd",
+    "fps": 26.43770773594089,
+    "frame_p95_ms": 57.8455,
+    "render_ms": 3.4149034444444446,
+    "capture_ms": 10.247607555555556,
+    "detection_ms": 22.02572011111111,
+    "event_pump_ms": 1.3381165555555556,
+    "observations": {
+      "frames": 960,
+      "frames_with_hands": 0
+    },
+    "report": "release-live-synchronous-after-2.json"
+  },
+  {
+    "mode": "after",
+    "trial": 3,
+    "source_revision": "10bc59935cbce29bcb31df93e79776616d9177dd",
+    "fps": 27.110357427109243,
+    "frame_p95_ms": 56.1253,
+    "render_ms": 3.2578283333333333,
+    "capture_ms": 10.322032444444444,
+    "detection_ms": 21.28394677777778,
+    "event_pump_ms": 1.2986958888888889,
+    "observations": {
+      "frames": 960,
+      "frames_with_hands": 0
+    },
+    "report": "release-live-synchronous-after-3.json"
+  }
+]

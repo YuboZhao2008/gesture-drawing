@@ -21,9 +21,11 @@ OpenCVCamera -> MediaPipeHandDetector -> GeometricGestureRecognizer
                                                            -> UI presentation
 ```
 
-`GestureControlApp` runs the stages synchronously. `runner.py` owns capture,
-construction, controls, and shutdown. `ObservedTemporal` lets the UI observe the
-same frame/predictions without repeating recognition. Core contracts use only the
+`GestureControlApp` runs processing stages synchronously. A camera worker keeps
+one latest frame available without building a queue; rendering and key handling
+stay on the main thread. `runner.py` owns construction, controls, and shutdown.
+`ObservedTemporal` lets the UI observe the same frame/predictions without repeating
+recognition. Core contracts use only the
 standard library; vision and UI dependencies are optional extras.
 
 Frame timestamps drive dwell, pinch hysteresis, hand loss, and pointer smoothing.
@@ -77,6 +79,14 @@ it the app uses built-in defaults matching `configs/default.toml`. Change
 Unknown keys, invalid types, nonfinite values, and inconsistent thresholds fail early.
 Defaults are starting points for tuning, not measured accuracy recommendations.
 
+Normal mode keeps the skeleton visible and hides advanced diagnostics. Use D to
+toggle them, `--diagnostics` to start with them, or `--no-diagnostics` to override
+`debug = true` in a configuration file. `--camera-width` / `--camera-height` request
+capture dimensions; unsupported requests may negotiate a different mode.
+`--synchronous-camera` selects the original capture path for comparison or device
+troubleshooting. The default latest-frame worker favors fresh frames under load;
+its frame IDs can skip, and it does not make the camera's sensor run faster.
+
 ESC, window close, Ctrl+C, camera failure, and exceptions trigger cleanup. Active
 drawing, mapper state, temporal state, camera, detector, and UI windows each receive
 a cleanup attempt. Failures are logged and do not block remaining cleanup or replace
@@ -102,11 +112,20 @@ the original processing exception. Startup/runtime errors return a nonzero exit 
 | UNKNOWN | Non-actionable; ends prior gesture after dwell |
 | Hand missing | Release drawing immediately, even during tracking loss grace |
 
-Gesture starts normally require 0.12 s dwell and 0.2 s acquisition delay. Visible
-release also uses dwell; contradictory evidence stops pointer updates while that
-transition settles. Missing hands release pinch immediately. Reappearance starts a
-new stroke after acceptance; no line connects across disappearance. Clear and
+Gesture starts normally require 0.12 s dwell and 0.2 s acquisition delay, running
+concurrently. PINCH start/release use a 40 ms dwell cap, accepted on the next
+observed frame; initial/new-track acquisition still applies. Established POINT
+can tolerate up to 60 ms of visible classification noise. Uncertain pinch release
+never adds drawing points. Missing hands release pinch immediately. Reappearance
+starts a new stroke after acceptance; no line connects across disappearance. Clear and
 calibration require a fresh pinch start, so release and pinch again before drawing.
+
+The default adaptive One Euro filter suppresses small stationary jitter and
+responds faster during movement. Tune `[smoothing]` in `configs/default.toml`:
+lower `min_cutoff` for more stationary smoothing, or increase `beta` for less
+motion lag. Cutoffs use Hz and speed uses source-image fractions per second.
+Set `adaptive = false` for the legacy `alpha` filter, or `enabled = false` to
+bypass filtering. See the [deterministic motion comparison](src/gesture_control/recognition/README.md#motion-tuning-and-measurements).
 
 ## Calibration
 
@@ -155,6 +174,23 @@ start/continuation/release, disappearance and reappearance without a connecting 
 four-corner calibration, D/R/S controls, and ESC exit. If camera 0 cannot open, check
 Windows camera permissions, close other camera apps, and select the correct index.
 
+## Performance measurement
+
+The [integrated polish report](docs/POLISH_RELEASE.md) records before/after trials,
+validation, and the distinction between live no-hand timing and synthetic motion.
+The [initial architecture review](PERFORMANCE.md) explains the measured bottlenecks.
+To collect stage timings locally without saving webcam images:
+
+```powershell
+.\.venv\Scripts\python.exe -m gesture_control --max-frames 960 --profile-warmup 60 --profile recordings/performance.json
+.\.venv\Scripts\python.exe scripts/benchmark_pipeline.py --calibrated --diagnostics off --output recordings/synthetic-performance.json
+```
+
+Profiling is opt-in. Reports include capture, inference, recognition, temporal,
+mapping, drawing, rendering, and native event-pump timings. Nested stage durations
+must not be added together. The synthetic benchmark excludes the camera, inference,
+and native window; its FPS is processing capacity, not achieved webcam FPS.
+
 ## Limitations
 
 - One hand and one owned stroke at a time; no desktop mouse/keyboard automation.
@@ -164,6 +200,9 @@ Windows camera permissions, close other camera apps, and select the correct inde
 - Track continuity is conservative: a missing frame, handedness flip, fast motion,
   or long frame gap can split a track/stroke. Slow capture may need a larger
   `temporal.hand_loss_grace_s`; no background timer advances a stalled stream.
+- The camera currently negotiates 30 FPS on the tested device. Driver delivery,
+  exposure, inference, and scheduling can still create uneven frames. Shutdown
+  waits for an in-progress native camera read; a hung driver can delay release.
 - No eraser, undo, brush dynamics, training pipeline, or packaged recording/replay UI.
 - Calibration and PNG exports are local generated files. `models/`, `datasets/`, and
   `recordings/` keep placeholders only. The three specialist `*-worktree/` directories

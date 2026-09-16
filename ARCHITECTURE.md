@@ -25,7 +25,7 @@ model frameworks, GUI frameworks, and operating-system input APIs.
 Changes to public types, units, or protocol signatures require coordination with
 their consumers. Concrete stages should receive collaborators by injection, not
 import another stage's concrete class. Core imports never point into these stages.
-`scripts/` is reserved for future entry points and development utilities.
+`scripts/` contains development utilities, including the deterministic pipeline benchmark.
 
 ## Data flow and public interfaces
 
@@ -166,8 +166,12 @@ than exit, both in palm units; the recognition section shares these thresholds w
 the temporal implementation as needed. Reacquisition delay gates renewed activity,
 loss grace tolerates brief missing observations, and dwell accepts a gesture after
 continuous evidence. Temporal work must specify their exact transition interactions.
-Smoothing alpha is the weight of the newest pointer observation in (0, 1]. Workspace
-dimensions are positive pixels; they do not discover the actual display.
+Smoothing defaults to an adaptive One Euro filter: minimum and derivative cutoffs
+are positive Hz, and nonnegative beta scales source-image-fraction speed. Disabling
+adaptive mode selects the legacy filter, whose alpha is the newest observation's
+weight at 30 Hz in (0, 1], adjusted by elapsed time. Disabling smoothing bypasses
+both filters. Workspace dimensions are positive pixels; they do not discover the
+actual display.
 
 Future stages receive only the settings and collaborators they need. Add heavyweight
 dependencies as optional extras when a concrete backend requires them. Share feature
@@ -204,3 +208,12 @@ is synthesized. UI rendering may shrink the preview of the canvas while preservi
 its configured pixel resolution and source-to-workspace calibration transform.
 Calibration persistence and internal drawing are implemented by `ui/`; the general
 `control/` package remains an extension point for future adapters.
+
+The camera adapter's optional single-slot worker owns native open/read/release;
+the integrated runner enables it by default. Superseded frames are dropped before
+processing, preserving acquisition timestamps and potentially skipping frame IDs.
+The core app remains synchronous. Detection, downstream processing, rendering,
+and HighGUI event polling execute on the runner thread. Native event pumping uses
+`pollKey` when available, otherwise one `waitKey(1)` call. Opt-in profiling observes
+these stages and restores its hooks on exit; native camera metadata is read from
+the worker's startup snapshot rather than querying capture concurrently.

@@ -140,8 +140,9 @@ python -m gesture_control --camera-width 1280 --camera-height 720 --no-diagnosti
 ```
 
 Requested FPS continues to come from `CameraConfig.target_fps` in `--config`.
-`--no-diagnostics` uses the existing UI switch to skip landmark overlays; the D
-key still toggles them. UI layout and recognition rules are unchanged. Debug
+Normal mode retains the hand skeleton. `--diagnostics` shows additional landmark
+indices, bounds, and status details; `--no-diagnostics` hides them even when the
+loaded configuration enables debug. The D key toggles advanced diagnostics. Debug
 rendering is outside detector/capture; it cannot block the capture worker. It can
 still limit the synchronous application's processed FPS.
 
@@ -168,3 +169,5 @@ and **must not** be described as optical camera-to-landmark latency.
 
 See [the measured performance report](PERFORMANCE.md) for before/after results,
 hardware limitations and the recommended runtime settings.
+Those specialist measurements precede the UI merge; see the
+[integrated release report](../../../docs/POLISH_RELEASE.md) for full native-window results.

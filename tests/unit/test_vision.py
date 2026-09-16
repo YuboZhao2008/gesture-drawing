@@ -115,6 +115,10 @@ def test_camera_lifecycle(capture: MagicMock, monkeypatch: pytest.MonkeyPatch) -
     camera.release()
     capture.release.assert_called_once()
     cv2 = pytest.importorskip("cv2")
+    assert capture.set.call_count == 4
+    capture.set.assert_any_call(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    capture.set.assert_any_call(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    capture.set.assert_any_call(cv2.CAP_PROP_FPS, 60)
     capture.set.assert_any_call(cv2.CAP_PROP_BUFFERSIZE, 1)
     with pytest.raises(RuntimeError, match="not open"):
         camera.read()

@@ -1,7 +1,8 @@
 """Opt-in integration instrumentation, installed/restored only for a benchmark run.
 
 Specialist source files stay untouched. Native OpenCV and calibration hooks are
-process-wide during this scope: use only with the current single-thread runner.
+process-wide during this scope: processing and UI must stay on the runner thread.
+The camera worker's native operations are not hooked.
 Private backend inference detail is optional; detection timing is always available.
 """
 

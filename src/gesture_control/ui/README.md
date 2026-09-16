@@ -140,6 +140,9 @@ Camera skeletons render after preview scaling; the persistent canvas is resized
 directly into a display buffer before adding a fixed-size, high-contrast cursor.
 No preview operation changes stroke coordinates, saved pixels, or export resolution.
 Existing antialiased stroke interpolation is preserved.
+The native window receives a useful initial size once; subsequent user resizing
+is preserved. The FPS badge measures frames over elapsed time across the latest
+30 intervals, avoiding inflated values when camera delivery arrives in bursts.
 
 Local render-only benchmark against dd16f99, synthetic 640x480 camera with one hand,
 20 warmup frames and median of five batches of 100 frames:
@@ -150,5 +153,7 @@ Local render-only benchmark against dd16f99, synthetic 640x480 camera with one h
 | 1920x1080 | 6.62 / 2.07 ms | 6.60 / 2.27 ms |
 
 These measurements exclude capture, inference, and native window presentation and
-are machine-dependent. The camera launch was attempted during this change, but
-camera 0 failed to return a frame; live tracking validation remains pending.
+are machine-dependent. The specialist's initial camera attempt failed to return
+a frame. After integration, the live camera/window, D/R/S, C/SPACE missing-pointer
+feedback, and Escape cleanup were checked successfully. Physical hand interaction
+still needs manual acceptance; see the [release report](../../../docs/POLISH_RELEASE.md).
