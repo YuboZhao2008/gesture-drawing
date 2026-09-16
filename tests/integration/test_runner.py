@@ -137,9 +137,16 @@ def test_lifecycle_attempts_all_cleanup(
         assert caplog.text.count("Cleanup failed:") == 3
 
 
+@pytest.mark.parametrize(
+    ("debug", "diagnostics", "expected"),
+    [(False, None, False), (True, None, True), (True, False, False), (False, True, True)],
+)
 def test_finite_headless_runner_processes_and_renders(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    debug: bool,
+    diagnostics: bool | None,
+    expected: bool,
 ) -> None:
     from .test_pipeline import UnusedDetector
 
@@ -171,14 +178,21 @@ def test_finite_headless_runner_processes_and_renders(
     def unexpected_window(*args: object, **kwargs: object) -> None:
         raise AssertionError("Headless mode must not open a window")
 
+    class UI(demo.DemoUI):
+        def render(self, image: Image) -> Image:
+            assert self.diagnostics is expected
+            return super().render(image)
+
+    monkeypatch.setattr(demo, "DemoUI", UI)
     monkeypatch.setattr(vision, "MediaPipeHandDetector", Detector)
     monkeypatch.setattr(vision, "OpenCVCamera", Camera)
     monkeypatch.setattr(cv2, "namedWindow", unexpected_window)
     assert (
         runner.run(
-            AppConfig(workspace=WorkspaceConfig(640, 480)),
+            AppConfig(workspace=WorkspaceConfig(640, 480), debug=debug),
             headless=True,
             max_frames=3,
+            diagnostics=diagnostics,
             calibration_path=tmp_path / "none.json",
         )
         == 3
@@ -198,3 +212,40 @@ def test_cli_help_and_validation(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_cli_reports_startup_failure(tmp_path: Path) -> None:
     assert runner.main(["--config", str(tmp_path / "missing.toml")]) == 1
+
+
+@pytest.mark.parametrize(
+    ("options", "expected"), [([], None), (["--diagnostics"], True), (["--no-diagnostics"], False)]
+)
+def test_cli_forwards_capture_and_diagnostic_options(
+    monkeypatch: pytest.MonkeyPatch,
+    options: list[str],
+    expected: bool | None,
+) -> None:
+    received: dict[str, object] = {}
+
+    def fake_run(config: AppConfig, **kwargs: object) -> int:
+        received.update(kwargs)
+        return 3
+
+    monkeypatch.setattr(runner, "run", fake_run)
+    assert (
+        runner.main(
+            [
+                "--headless",
+                "--max-frames",
+                "3",
+                "--camera-width",
+                "800",
+                "--camera-height",
+                "600",
+                "--synchronous-camera",
+                *options,
+            ]
+        )
+        == 0
+    )
+    assert received["diagnostics"] is expected
+    assert received["camera_width"] == 800 and received["camera_height"] == 600
+    assert received["latest_frame"] is False
+    assert received["headless"] is True and received["max_frames"] == 3
