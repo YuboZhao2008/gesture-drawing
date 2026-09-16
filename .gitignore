@@ -19,3 +19,7 @@ recordings/*
 !recordings/.gitkeep
 .vscode/
 .idea/
+.pytest_tmp/
+vision-worktree/
+recognition-worktree/
+ui-worktree/
