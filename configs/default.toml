@@ -20,7 +20,12 @@ held_interval_s = 0.1
 
 [smoothing]
 enabled = true
-# Exponential smoothing weight assigned to the newest pointer observation.
+# Adaptive One Euro filter. Cutoffs are Hz; beta scales image-fraction speed.
+adaptive = true
+min_cutoff = 1.5
+beta = 20.0
+derivative_cutoff = 1.0
+# Legacy exponential weight at 30 Hz, used only when adaptive = false.
 alpha = 0.35
 
 [workspace]

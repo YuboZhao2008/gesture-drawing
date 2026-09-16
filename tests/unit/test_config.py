@@ -4,7 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from gesture_control.core.config import AppConfig, CameraConfig, load_config
+from gesture_control.core.config import AppConfig, CameraConfig, SmoothingConfig, load_config
+from gesture_control.core.types import (
+    FrameContext,
+    Gesture,
+    GesturePrediction,
+    HandFrame,
+    HandLandmarks,
+    Landmark3D,
+)
+from gesture_control.temporal import GestureTemporalProcessor, OneEuroFilter, PointerFilterConfig
 
 
 def test_checked_in_defaults_match_dataclass_defaults() -> None:
@@ -97,3 +106,105 @@ def test_direct_construction_is_validated() -> None:
         CameraConfig(target_fps=-30)
     with pytest.raises(ValueError, match="CameraConfig"):
         AppConfig(camera={})  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("adaptive", 1),
+        ("adaptive", "false"),
+        ("min_cutoff", 0),
+        ("min_cutoff", True),
+        ("min_cutoff", "1.5"),
+        ("min_cutoff", float("nan")),
+        ("min_cutoff", float("inf")),
+        ("beta", -1),
+        ("beta", True),
+        ("beta", float("nan")),
+        ("beta", float("inf")),
+        ("derivative_cutoff", 0),
+        ("derivative_cutoff", -1),
+        ("derivative_cutoff", True),
+        ("derivative_cutoff", float("inf")),
+    ],
+)
+def test_smoothing_parameters_rejected_before_component_construction(
+    name: str,
+    value: object,
+) -> None:
+    with pytest.raises(ValueError, match="smoothing"):
+        AppConfig.from_mapping({"smoothing": {name: value}})
+    with pytest.raises(ValueError, match="smoothing"):
+        SmoothingConfig(**{name: value})  # type: ignore[arg-type]
+
+
+def pointer_step(processor: GestureTemporalProcessor, frame_id: int, x: float) -> float:
+    hand = HandLandmarks("config-test", tuple(Landmark3D(x, 0.5) for _ in range(21)))
+    output = processor.process(
+        HandFrame(FrameContext(frame_id, frame_id / 30, 640, 480), (hand,)),
+        (GesturePrediction(hand.hand_id, Gesture.POINT, 0.9),),
+    )
+    return output.pointer_events[0].x
+
+
+@pytest.mark.parametrize("suffix", [".toml", ".json"])
+@pytest.mark.parametrize("adaptive", [True, False])
+def test_loaded_smoothing_controls_processor(tmp_path: Path, suffix: str, adaptive: bool) -> None:
+    settings = {
+        "smoothing": {
+            "adaptive": adaptive,
+            "min_cutoff": 2.5,
+            "beta": 0,
+            "derivative_cutoff": 3.0,
+            "alpha": 0.25,
+        },
+        "temporal": {"gesture_dwell_s": 0, "reacquisition_delay_s": 0},
+    }
+    path = tmp_path / f"motion{suffix}"
+    if suffix == ".json":
+        path.write_text(json.dumps(settings), encoding="utf-8")
+    else:
+        path.write_text(
+            f"[smoothing]\nadaptive = {str(adaptive).lower()}\nmin_cutoff = 2.5\n"
+            "beta = 0\nderivative_cutoff = 3.0\nalpha = 0.25\n"
+            "[temporal]\ngesture_dwell_s = 0\nreacquisition_delay_s = 0\n",
+            encoding="utf-8",
+        )
+    config = load_config(path)
+    processor = GestureTemporalProcessor(config.temporal, smoothing=config.smoothing)
+    expected_config = PointerFilterConfig(2.5, 0, 3.0, adaptive)
+    assert processor.pointer_config == expected_config
+    assert pointer_step(processor, 0, 0) == 0
+    reference = OneEuroFilter(expected_config)
+    reference.filter(0, 0.5, 0)
+    expected = reference.filter(1, 0.5, 1 / 30)[0] if adaptive else 0.25
+    assert pointer_step(processor, 1, 1) == pytest.approx(expected)
+
+
+def test_explicit_filter_override_and_disabled_smoothing() -> None:
+    config = AppConfig.from_mapping(
+        {
+            "temporal": {"gesture_dwell_s": 0, "reacquisition_delay_s": 0},
+            "smoothing": {"alpha": 0.2, "min_cutoff": 8, "beta": 50},
+        }
+    )
+    override = PointerFilterConfig(adaptive=False)
+    processor = GestureTemporalProcessor(
+        config.temporal, smoothing=config.smoothing, pointer_filter=override
+    )
+    assert processor.pointer_config is override
+    pointer_step(processor, 0, 0)
+    assert pointer_step(processor, 1, 1) == pytest.approx(0.2)
+    disabled = GestureTemporalProcessor(
+        config.temporal, smoothing=replace(config.smoothing, enabled=False), pointer_filter=override
+    )
+    pointer_step(disabled, 0, 0)
+    assert pointer_step(disabled, 1, 1) == 1
+
+
+def test_existing_alpha_and_positional_configuration_remain_valid() -> None:
+    assert SmoothingConfig(False, 0.5).enabled is False
+    config = AppConfig.from_mapping({"smoothing": {"alpha": 0.2}})
+    assert config.smoothing.alpha == 0.2
+    assert config.smoothing.adaptive is True
+    assert GestureTemporalProcessor().pointer_config == PointerFilterConfig()

@@ -400,3 +400,68 @@ def test_pointer_filters_are_isolated_by_track_and_reset() -> None:
     assert out.pointer_events[1].x == 0.9
     processor.reset()
     assert step(0, 0, 0.8, 0.2).pointer_events[0].x == 0.8
+
+
+def test_rejected_pinch_candidate_cannot_later_start_from_exit_band() -> None:
+    stream = Stream()
+    for time in (0, 0.06, 0.12):
+        stream.step(time)
+    stream.step(0.14, Gesture.PINCH, distance=0.24)
+    stream.step(0.16, Gesture.POINT, distance=0.40)
+    # A rejected one-frame candidate is not an accepted pinch. Its old latch
+    # must not turn later UNKNOWN evidence in the exit band into a new stroke.
+    for time in (0.19, 0.22, 0.25, 0.28):
+        out = stream.step(time, Gesture.UNKNOWN, confidence=0, distance=0.30)
+        assert E.PINCH_STARTED not in kinds(out)
+        assert out.stable_gestures[0].gesture is not Gesture.PINCH
+    stream.step(0.30, Gesture.PINCH, distance=0.24)
+    assert E.PINCH_STARTED in kinds(stream.step(0.35, Gesture.PINCH, distance=0.24))
+
+
+def test_irregular_stream_has_balanced_ordered_pinch_lifecycles() -> None:
+    stream = Stream(delay=0.1)
+    sequence: list[tuple[float, Gesture | None, float | None]] = [
+        (0, Gesture.POINT, 0.5),
+        (0.07, Gesture.POINT, 0.5),
+        (0.13, Gesture.POINT, 0.5),
+        (0.16, Gesture.PINCH, 0.2),
+        (0.18, Gesture.PINCH, 0.2),
+        (0.21, Gesture.PINCH, 0.2),
+        (0.21, Gesture.PINCH, 0.2),  # Equal time: no duplicate transition.
+        (0.24, Gesture.POINT, 0.36),
+        (0.26, Gesture.UNKNOWN, 0.3),
+        (0.29, None, None),
+        (0.32, None, None),  # End once, no pointers.
+        (0.34, Gesture.PINCH, 0.2),
+        (0.39, Gesture.PINCH, 0.2),
+        (0.45, Gesture.PINCH, 0.2),  # New stroke after reacquisition.
+        (0.48, Gesture.UNKNOWN, 0.5),
+        (0.51, Gesture.FIST, 0.5),
+        (0.53, Gesture.POINT, 0.5),  # Alternating labels still release.
+        (0.69, None, None),
+        (0.80, None, None),
+    ]
+    active = False
+    starts = ends = 0
+    for time, gesture, distance in sequence:
+        out = stream.step(time, gesture, distance=distance)
+        events = out.gesture_events
+        for index, event in enumerate(events):
+            if event.kind is E.PINCH_STARTED:
+                assert not active
+                assert index > 0 and events[index - 1].kind is E.GESTURE_STARTED
+                assert events[index - 1].gesture is Gesture.PINCH
+                active = True
+                starts += 1
+            elif event.kind is E.PINCH_ENDED:
+                assert active
+                assert index > 0 and events[index - 1].kind is E.GESTURE_ENDED
+                assert events[index - 1].gesture is Gesture.PINCH
+                active = False
+                ends += 1
+            elif event.kind in (E.HAND_ACQUIRED, E.HAND_LOST):
+                assert not active
+        if gesture is None:
+            assert not active and not out.pointer_events
+        assert all(event.context == out.context for event in events)
+    assert starts == ends == 2

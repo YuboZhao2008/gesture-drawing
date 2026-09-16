@@ -53,7 +53,22 @@ pinch distance. The recognizer is stateless; the temporal stage owns hysteresis.
 | `MotionConfig.pinch_start_s` / `pinch_release_s` | 0.04 s / 0.04 s |
 | `MotionConfig.pointer_noise_grace_s` / `pointer_dropout_grace_s` | 0.06 s / 0.08 s |
 
-New settings are constructor-level options, not new AppConfig/TOML sections.
+Geometry, history, and motion timing options remain constructor-level settings.
+Filter selection and tuning also live in `AppConfig.smoothing` / `[smoothing]`:
+
+```toml
+[smoothing]
+enabled = true
+adaptive = true
+min_cutoff = 1.5
+beta = 20.0
+derivative_cutoff = 1.0
+alpha = 0.35 # Used only when adaptive = false (legacy exponential filter).
+```
+
+Cutoffs must be positive finite numbers, beta nonnegative and finite, and adaptive
+a boolean. `enabled = false` bypasses both filters. Existing alpha-only files
+remain valid; set `adaptive = false` to select the alpha-based behavior explicitly.
 
 ## Temporal semantics
 
@@ -73,8 +88,10 @@ New settings are constructor-level options, not new AppConfig/TOML sections.
   pinch despite an UNKNOWN instantaneous pose. Missing/unusable distance falls back
   to confidence-gated labels. Label-only classifiers work but lack distance hysteresis.
   A single exit spike does not clear the latch: returning to the band during release
-  dwell preserves the hold. Pinch starts and releases use a 40 ms dwell cap (or the
-  core dwell if shorter). Continuous non-pinch evidence releases drawing even when
+  dwell preserves an already accepted hold. An unaccepted pinch candidate loses its
+  latch on exit and must cross the enter threshold again; stale candidate evidence
+  cannot start a stroke from the exit band. Pinch starts and releases use a 40 ms
+  dwell cap (or the core dwell if shorter). Continuous non-pinch evidence releases drawing even when
   its labels alternate. Other gesture replacements retain core dwell protection.
 - Replacements end the old gesture before starting the new. Generic pinch starts
   and ends precede their PINCH_STARTED/PINCH_ENDED companions. Pinch holds use
@@ -116,8 +133,11 @@ positive loss grace above expected frame gaps for slow or highly irregular strea
 
 ## Motion tuning and measurements
 
-Existing constructors and `process`/`reset` signatures remain compatible. The new
-options are keyword-only:
+Existing constructors and `process`/`reset` signatures remain compatible. By default,
+the processor derives its filter from the supplied `SmoothingConfig`, so loaded
+TOML/JSON settings reach the filter without UI or runner changes. An explicit
+`pointer_filter=` overrides adaptive/cutoff/beta settings; the shared `enabled`
+switch and legacy `alpha` remain effective. Constructor overrides are keyword-only:
 
 ```python
 from gesture_control.temporal import MotionConfig, PointerFilterConfig
