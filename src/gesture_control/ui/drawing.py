@@ -80,6 +80,11 @@ class DrawingMapper:
         now = self._evidence_context.timestamp_s if self._evidence_context else 0.0
         return max(0.0, self._cooldown_until - now)
 
+    @property
+    def tool_switch_release_required(self) -> bool:
+        """A completed toggle requires a deliberate release before another dwell."""
+        return not self._tool_armed
+
     def reset(self) -> None:
         """Cancel all interaction state, preserving the selected tool.
 
@@ -182,6 +187,7 @@ class DrawingMapper:
                 Command(output.context, "tool.select", {"tool": self.tool}, self._pending_switch)
             )
             self._pending_switch = None
+            self.tool_switch_progress = 0.0
             # A global tool transition is its own interaction. Do not consume
             # another hand's simultaneous pinch start or a stale pointer batch.
             return tuple(commands)
