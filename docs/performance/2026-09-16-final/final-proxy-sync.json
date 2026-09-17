@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "warmup_frames": 60,
+  "measured_frames": 900,
+  "retained_frames": 900,
+  "failed_frames": 0,
+  "effective_fps": 28.562076440869248,
+  "window_elapsed_s": 31.5103141,
+  "frames_over_33_333_ms": 465,
+  "stages": {
+    "canvas_render": {
+      "mean_ms": 0.9396407777777778,
+      "p50_ms": 0.8652,
+      "p95_ms": 1.7483,
+      "p99_ms": 2.1137,
+      "max_ms": 5.0338,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "capture": {
+      "mean_ms": 15.573175888888889,
+      "p50_ms": 13.0781,
+      "p95_ms": 36.981,
+      "p99_ms": 51.8531,
+      "max_ms": 67.6737,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "color_conversion": {
+      "mean_ms": 0.06560044444444445,
+      "p50_ms": 0.0542,
+      "p95_ms": 0.1315,
+      "p99_ms": 0.2123,
+      "max_ms": 0.2922,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "detection": {
+      "mean_ms": 15.526328888888889,
+      "p50_ms": 13.7437,
+      "p95_ms": 27.1852,
+      "p99_ms": 34.627,
+      "max_ms": 46.4461,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "frame": {
+      "mean_ms": 35.00643655555555,
+      "p50_ms": 33.6387,
+      "p95_ms": 53.9985,
+      "p99_ms": 65.9862,
+      "max_ms": 101.2353,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "imshow": {
+      "mean_ms": 0.3159287777777778,
+      "p50_ms": 0.2702,
+      "p95_ms": 0.5374,
+      "p99_ms": 0.6664,
+      "max_ms": 1.114,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "inference": {
+      "mean_ms": 15.229108111111112,
+      "p50_ms": 13.3227,
+      "p95_ms": 26.7916,
+      "p99_ms": 34.1361,
+      "max_ms": 46.0392,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "key_handler": {
+      "mean_ms": 0.004091333333333333,
+      "p50_ms": 0.0037,
+      "p95_ms": 0.0057,
+      "p99_ms": 0.0073,
+      "max_ms": 0.1168,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "layout": {
+      "mean_ms": 1.3652212222222222,
+      "p50_ms": 1.1359,
+      "p95_ms": 2.1647,
+      "p99_ms": 2.6651,
+      "max_ms": 4.3091,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "mapping": {
+      "mean_ms": 0.0030841111111111113,
+      "p50_ms": 0.0027,
+      "p95_ms": 0.005,
+      "p99_ms": 0.0057,
+      "max_ms": 0.0081,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "observation": {
+      "mean_ms": 0.006628333333333333,
+      "p50_ms": 0.0058,
+      "p95_ms": 0.0104,
+      "p99_ms": 0.0116,
+      "max_ms": 0.0392,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "poll_key": {
+      "mean_ms": 0.9947092222222222,
+      "p50_ms": 0.7541,
+      "p95_ms": 2.0011,
+      "p99_ms": 2.2193,
+      "max_ms": 2.9559,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "present": {
+      "mean_ms": 3.814931,
+      "p50_ms": 3.2286,
+      "p95_ms": 6.1502,
+      "p99_ms": 7.0112,
+      "max_ms": 9.6408,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "recognition": {
+      "mean_ms": 0.0014496666666666666,
+      "p50_ms": 0.0013,
+      "p95_ms": 0.0024,
+      "p99_ms": 0.003,
+      "max_ms": 0.005,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "render": {
+      "mean_ms": 2.3334086666666662,
+      "p50_ms": 2.0157,
+      "p95_ms": 3.8395,
+      "p99_ms": 4.5002,
+      "max_ms": 6.5808,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "resize": {
+      "mean_ms": 1.4784376666666668,
+      "p50_ms": 1.2656,
+      "p95_ms": 2.6465,
+      "p99_ms": 3.272,
+      "max_ms": 5.6596,
+      "active_frames": 900,
+      "calls": 1800
+    },
+    "temporal": {
+      "mean_ms": 0.01872611111111111,
+      "p50_ms": 0.0164,
+      "p95_ms": 0.0294,
+      "p99_ms": 0.0334,
+      "max_ms": 0.1099,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "text_raster": {
+      "mean_ms": 0.15049122222222222,
+      "p50_ms": 0.1287,
+      "p95_ms": 0.2653,
+      "p99_ms": 0.3188,
+      "max_ms": 0.5691,
+      "active_frames": 900,
+      "calls": 7200
+    },
+    "window_poll": {
+      "mean_ms": 0.007242333333333334,
+      "p50_ms": 0.0066,
+      "p95_ms": 0.0112,
+      "p99_ms": 0.0128,
+      "max_ms": 0.0326,
+      "active_frames": 900,
+      "calls": 900
+    }
+  },
+  "metadata": {
+    "source_sha256": {
+      "__init__.py": "c1938bec9e1b98fdb3862ce38b510630c69ce4d0352a2da13f6ad79c3f2bf986",
+      "__main__.py": "56c559905f572d10e4eb71b6aa54f4465da82f0adf59e9c94afd4c4a3a212c05",
+      "app.py": "a30039d8902180f7978b7674c617119ade75b3586825bea1accade7caee0eee6",
+      "control\\__init__.py": "7ed0cdeba954fe04b2ac636745d31e38bc1eafb145e69c5eab316b107294d8ea",
+      "control\\adapters\\__init__.py": "4cd93eb1f93cd566070c4bca210f535c1b0c9e362cdb82788094a6d00d4e29de",
+      "core\\__init__.py": "6d052930fca591afb1ec0478f343bd438d83609718920f94363f681fe5633d46",
+      "core\\_validation.py": "6458a9953e29f79acbad5ef7a097a90fe2f2d92c6f5e614638521b9c90ff6e37",
+      "core\\config.py": "36a10c5166332830bfd65c1eafe55e9be3ea3eebb5fb6329ba00bf4dd47d6889",
+      "core\\events.py": "ca3efec6d19bd98678953c1d7f0f5b8b909d60dbac9c3b5ed581b8d32276e900",
+      "core\\performance.py": "895cfcc1ab9de280fe29eef34839c0d99914f9c9a2602e814ba6042bd8b1ded6",
+      "core\\protocols.py": "4811e35e8569e7d73e5279cb6e2b2fbcd531c408c0b9b1b1847fda1ba544262b",
+      "core\\types.py": "4f36fe52bfea35572134e35e441617fb0475e1d06a1e973546a47723472db323",
+      "profiling.py": "8a90569ec680c28aa4f9a8b066dcedf4844afe4e7298cf26cd598af0219f4d01",
+      "recognition\\__init__.py": "cdf1c0c6911abcf2192c8fd0db6648ad2fbd674fe31f1c0562a5e745bd3a89e4",
+      "recognition\\geometric.py": "542333bd7d6aad1f0fb2c02fba459a47e9a08243ed74620c3b91307665485e88",
+      "recognition\\geometry.py": "96dbd37e566c1019263147f1db7c8710bbf818688503db04f2001bd49c7ff13c",
+      "runner.py": "2e8654ce84a1dfc9e8f36c48f1a884a75d7813a33c437a3f10c9dbafa7717478",
+      "temporal\\__init__.py": "dfe599d0b72e0ab87ce8f1b48ad0e93cece85f3502da5249eeed91e728b8048d",
+      "temporal\\filtering.py": "9e29be3c4129235053f97f1fc4624a0c6d4351b4b29e85b1af94bd46a1cfeaac",
+      "temporal\\motion.py": "a562a3bbd7f78e7e92ca87b0bcd6337407e8b54d69e737b2132238878faf652e",
+      "temporal\\processor.py": "8aecc19383210cd6be2061bcb0169c054c9a094cdf1f2e3d3f7fb46f216e4837",
+      "training\\__init__.py": "c416855586b4bf98a8396b9b8cde4fcffd6d26de52ad9791640df104f64a6b89",
+      "ui\\__init__.py": "d38fd2e249a5f370d42788aecb123aa01cc6dfff0ccbbf1d0ff5236ab8caac9f",
+      "ui\\calibration.py": "fa8ca473a78d6c2363197342200871c632ec92d4d29ca681c54acc48d6fe8f07",
+      "ui\\demo.py": "a11baeb7643249bb2991db4d5335ffcef8b96393930595dd027e172d7c8f41eb",
+      "ui\\drawing.py": "f835377d2cef805161af758a184dbc0602580bcecd2d8cb30492ed358e3c7b79",
+      "ui\\overlay.py": "bd3190f84f29622081f717c0df48d30aa434872126a2fc8ee8f6142e22dae238",
+      "vision\\__init__.py": "b40b332c34d56b61a9a46dacffa42b72f0518ee57184d35bff22d5234f81954f",
+      "vision\\benchmark.py": "71f2a395c7800c650fb86e5cae9cc7303a0b64bc9850a3f7fbb1854f1fd9c033",
+      "vision\\camera.py": "135ca5d6b6d4d7bc3017c02961b32565767c6f7314678e6897a34b008b2a2e9f",
+      "vision\\debug.py": "6f8622df04a701fd14cbe71df0c853d71905816b976d53142b531c8bbf4f9814",
+      "vision\\detector.py": "49fcb6ac547311e38fb4efe87ab27de9384f7b0b3d794fe790dfc92471059e34",
+      "vision\\geometry.py": "31b0ae408bf2c5395569c53ad2a03aec2eb0605575f93b5a21d3533f0eadd7e2",
+      "vision\\smoke.py": "39b0df2c7353d2bcf364dcd69ee9b0e70b68f0e9d9671ff7fa8439a58cf7e4a3"
+    },
+    "opencv_threads": 22,
+    "camera": {
+      "backend": "MSMF",
+      "width": 640.0,
+      "height": 480.0,
+      "fps": 30.0,
+      "buffer_size_accepted": false,
+      "buffer_size_readback": 1.0,
+      "latest_frame": false
+    },
+    "observations_including_warmup": {
+      "frames": 960,
+      "frames_with_hands": 7
+    },
+    "capture_delivery": {
+      "scope": "Last 9000 successful deliveries after capture warmup; may include a frame whose downstream processing failed. Skips exclude frames before the first retained delivery and after the last. Host timings exclude sensor/driver buffering.",
+      "retained_deliveries": 900,
+      "first_frame_id": 60,
+      "last_frame_id": 959,
+      "acquisition_interval_s": 31.461112999997567,
+      "acquisition_fps": 28.57495855280357,
+      "skipped_frame_ids": 0,
+      "host_acquisition_to_delivery_ms": {
+        "mean": 0.06172033337255319,
+        "p50": 0.05879998207092285,
+        "p95": 0.0934000127017498
+      }
+    },
+    "backend_sample_age_probe": {
+      "method": "perf_counter at delivery minus CAP_PROP_POS_MSEC; sample clock/exposure not independently calibrated. Additional native get on capture owner per acquisition.",
+      "samples": 900,
+      "first_backend_ms": 131909223.7276,
+      "last_backend_ms": 131940590.3943,
+      "nondecreasing": true,
+      "mean_ms": 65.36488255707754,
+      "p50_ms": 56.70830000936985,
+      "p95_ms": 121.60180000960827
+    }
+  },
+  "environment": {
+    "python": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "dependencies": {
+      "numpy": "2.5.3",
+      "opencv-contrib-python": "4.14.0.94",
+      "mediapipe": "0.10.35"
+    },
+    "config": {
+      "camera": {
+        "index": 0,
+        "target_fps": 30.0,
+        "min_detection_confidence": 0.5
+      },
+      "recognition": {
+        "min_confidence": 0.7,
+        "pinch_enter_threshold": 0.25,
+        "pinch_exit_threshold": 0.35
+      },
+      "temporal": {
+        "gesture_dwell_s": 0.12,
+        "reacquisition_delay_s": 0.2,
+        "hand_loss_grace_s": 0.15,
+        "held_interval_s": 0.1
+      },
+      "smoothing": {
+        "enabled": true,
+        "alpha": 0.35,
+        "adaptive": true,
+        "min_cutoff": 1.5,
+        "beta": 20.0,
+        "derivative_cutoff": 1.0
+      },
+      "workspace": {
+        "width": 1920,
+        "height": 1080
+      },
+      "debug": false
+    },
+    "headless": false,
+    "model": "models\\hand_landmarker.task"
+  }
+}

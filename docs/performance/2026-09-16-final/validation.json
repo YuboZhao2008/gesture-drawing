@@ -1,0 +1,45 @@
+{
+  "python": ".\\.venv\\Scripts\\python.exe",
+  "checks": [
+    {
+      "command": "-m pytest --basetemp=.pytest_tmp",
+      "chunk_id": "ac1a88",
+      "wall_time_seconds": 2.048639,
+      "exit_code": 0,
+      "original_token_count": 413,
+      "output": "============================= test session starts =============================\r\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\r\nrootdir: C:\\Users\\USER\\OneDrive\\Desktop\\gesture-control\r\nconfigfile: pyproject.toml\r\ntestpaths: tests\r\ncollected 296 items\r\n\r\ntests\\integration\\test_app.py ...........                                [  3%]\r\ntests\\integration\\test_pipeline.py .............                         [  8%]\r\ntests\\integration\\test_profiling.py .....                                [  9%]\r\ntests\\integration\\test_runner.py ...................                     [ 16%]\r\ntests\\unit\\test_config.py .............................................. [ 31%]\r\n......                                                                   [ 33%]\r\ntests\\unit\\test_events.py ......                                         [ 35%]\r\ntests\\unit\\test_motion.py ....................                           [ 42%]\r\ntests\\unit\\test_performance.py ...                                       [ 43%]\r\ntests\\unit\\test_recognition.py .......................                   [ 51%]\r\ntests\\unit\\test_temporal.py ..................................           [ 62%]\r\ntests\\unit\\test_types.py ................                                [ 68%]\r\ntests\\unit\\test_ui.py ................................                   [ 79%]\r\ntests\\unit\\test_ui_presentation.py ....................................  [ 91%]\r\ntests\\unit\\test_vision.py ....................                           [ 97%]\r\ntests\\unit\\test_vision_performance.py ......                             [100%]\r\n\r\n============================= 296 passed in 1.90s =============================\r\n"
+    },
+    {
+      "command": "-m ruff check .",
+      "chunk_id": "e39b59",
+      "wall_time_seconds": 0.000004,
+      "exit_code": 0,
+      "original_token_count": 5,
+      "output": "All checks passed!\n"
+    },
+    {
+      "command": "-m ruff format --check .",
+      "chunk_id": "38a5ba",
+      "wall_time_seconds": 0.0056137,
+      "exit_code": 0,
+      "original_token_count": 7,
+      "output": "64 files already formatted\n"
+    },
+    {
+      "command": "-m mypy",
+      "chunk_id": "02113e",
+      "wall_time_seconds": 0.7694504,
+      "exit_code": 0,
+      "original_token_count": 12,
+      "output": "Success: no issues found in 51 source files\r\n"
+    },
+    {
+      "command": "-m pip check",
+      "chunk_id": "8db541",
+      "wall_time_seconds": 0.5044041,
+      "exit_code": 0,
+      "original_token_count": 8,
+      "output": "No broken requirements found.\r\n"
+    }
+  ]
+}

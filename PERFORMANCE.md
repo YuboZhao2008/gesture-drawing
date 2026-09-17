@@ -3,6 +3,8 @@
 This is the initial architect's review. The changes it recommends have since been
 integrated; see [the release measurements and validation](docs/POLISH_RELEASE.md)
 for the final implementation, repeated comparisons, and remaining manual checks.
+The subsequent [final integration audit](docs/FINAL_INTEGRATION.md) includes
+alternating capture-mode trials and delivery telemetry from the integrated UI.
 
 Review target: `dd16f99ff585027ef09a71f1d9b3b3bd8332e94b` on Windows, Python
 3.12.10, OpenCV 4.14.0, MediaPipe 0.10.35, NumPy 2.5.3. Camera backend reported

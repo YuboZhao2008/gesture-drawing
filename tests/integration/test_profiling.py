@@ -89,3 +89,44 @@ def test_profile_uses_camera_snapshot_and_counts_observations(tmp_path: Path) ->
         "frames": 2,
         "frames_with_hands": 1,
     }
+
+
+def test_capture_profile_excludes_warmup_and_preserves_skipped_ids(tmp_path: Path) -> None:
+    pipeline = Pipeline(tmp_path)
+    monitor = PerformanceMonitor(warmup_frames=1)
+    frames = [SimpleNamespace(context=FrameContext(i, i / 10, 640, 480)) for i in (0, 5, 7, 10)]
+    pending = iter(frames)
+    camera = SimpleNamespace(read=lambda: next(pending), stream_time_s=0.0)
+    with instrument_pipeline(
+        monitor,
+        camera=camera,
+        detector=pipeline.app.detector,
+        recognizer=pipeline.recognizer,
+        temporal=pipeline.temporal,
+        ui=pipeline.ui,
+    ):
+        for frame in frames:
+            camera.stream_time_s = frame.context.timestamp_s + 0.01
+            with monitor.frame():
+                assert camera.read() is frame
+    report: Any = monitor.metadata["capture_delivery"]
+    assert report["retained_deliveries"] == 3
+    assert (report["first_frame_id"], report["last_frame_id"]) == (5, 10)
+    assert report["skipped_frame_ids"] == 3
+    assert report["acquisition_fps"] == pytest.approx(10)
+    assert report["host_acquisition_to_delivery_ms"] == pytest.approx(
+        {"mean": 10, "p50": 10, "p95": 10}
+    )
+
+
+def test_capture_profile_handles_empty_stream_and_bounds_memory() -> None:
+    from gesture_control.profiling import _CaptureProfile
+
+    profile = _CaptureProfile(warmup=0)
+    assert profile.report()["acquisition_fps"] is None
+    assert profile.report()["skipped_frame_ids"] == 0
+    for i in range(9002):
+        profile.observe(SimpleNamespace(context=FrameContext(i, i / 30, 640, 480)), object())
+    assert profile.report()["retained_deliveries"] == 9000
+    assert profile.report()["first_frame_id"] == 2
+    assert profile.report()["host_acquisition_to_delivery_ms"] is None

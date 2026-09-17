@@ -1,5 +1,9 @@
 # Gesture Control polish and performance release
 
+This is the original release record. See the [final integration audit](FINAL_INTEGRATION.md)
+for subsequent validation and capture-mode trials; the measurements below retain
+their original conditions and source revisions.
+
 Validated on September 16, 2026. The integrated application has a redesigned dark
 OpenCV interface, faster rendering/event polling, latest-frame capture, and adaptive
 pointer smoothing. No dependencies were added, and recognition geometry and public

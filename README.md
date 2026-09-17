@@ -178,6 +178,8 @@ Windows camera permissions, close other camera apps, and select the correct inde
 
 The [integrated polish report](docs/POLISH_RELEASE.md) records before/after trials,
 validation, and the distinction between live no-hand timing and synthetic motion.
+The [final integration audit](docs/FINAL_INTEGRATION.md) records the subsequent
+capture-mode comparison, current validation, and remaining hardware acceptance.
 The [initial architecture review](PERFORMANCE.md) explains the measured bottlenecks.
 To collect stage timings locally without saving webcam images:
 
@@ -190,6 +192,10 @@ Profiling is opt-in. Reports include capture, inference, recognition, temporal,
 mapping, drawing, rendering, and native event-pump timings. Nested stage durations
 must not be added together. The synthetic benchmark excludes the camera, inference,
 and native window; its FPS is processing capacity, not achieved webcam FPS.
+The `metadata.capture_delivery` section reports acquisition FPS from frame IDs and
+timestamps, skipped IDs between retained deliveries, and host acquisition-to-delivery
+age. It excludes capture warmup and retains at most 9000 deliveries. This host age
+excludes sensor/driver buffering and is not optical motion-to-photon latency.
 
 ## Limitations
 

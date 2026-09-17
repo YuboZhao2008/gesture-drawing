@@ -1,5 +1,6 @@
 """Exercise the production lifecycle with synthetic capture; no webcam/window needed."""
 
+import json
 from pathlib import Path
 
 import cv2
@@ -8,6 +9,7 @@ import pytest
 
 from gesture_control import runner, temporal, vision
 from gesture_control.core.config import AppConfig, TemporalConfig, WorkspaceConfig
+from gesture_control.core.performance import PerformanceMonitor
 from gesture_control.core.types import FrameContext, Gesture, HandFrame
 from gesture_control.ui import demo
 from gesture_control.ui.drawing import Image
@@ -249,3 +251,27 @@ def test_cli_forwards_capture_and_diagnostic_options(
     assert received["camera_width"] == 800 and received["camera_height"] == 600
     assert received["latest_frame"] is False
     assert received["headless"] is True and received["max_frames"] == 3
+    assert received["performance"] is None
+
+
+def test_cli_forwards_profile_warmup_and_writes_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "profiles" / "run.json"
+
+    def fake_run(config: AppConfig, **kwargs: object) -> int:
+        monitor = kwargs["performance"]
+        assert isinstance(monitor, PerformanceMonitor)
+        assert monitor.warmup_frames == 2
+        assert kwargs["latest_frame"] is True
+        for _ in range(3):
+            with monitor.frame():
+                pass
+        return 3
+
+    monkeypatch.setattr(runner, "run", fake_run)
+    assert runner.main(["--profile", str(path), "--profile-warmup", "2"]) == 0
+    report = json.loads(path.read_text(encoding="utf-8"))
+    assert report["retained_frames"] == 1
+    assert report["warmup_frames"] == 2
+    assert report["environment"]["config"]["smoothing"]["adaptive"] is True

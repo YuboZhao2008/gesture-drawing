@@ -127,6 +127,36 @@ def test_loss_releases_immediately_and_never_connects_across_gap(tmp_path: Path)
     assert tuple(p.ui.canvas.pixels[53, 140]) == (245, 247, 250)
 
 
+def test_skipped_ids_with_adaptive_filter_release_and_restart_on_new_hand(tmp_path: Path) -> None:
+    p = Pipeline(tmp_path)
+    p.temporal.smoothing = SmoothingConfig()
+    sequence = (
+        (0, 0.0, source_hand(Gesture.PINCH, x=0.3)),
+        (4, 0.04, source_hand(Gesture.PINCH, x=0.4)),
+        (8, 0.08, None),
+        (10, 0.1, source_hand(Gesture.PINCH, x=0.85, hand_id="new-hand")),
+    )
+    batches = []
+    for frame_id, timestamp, hand in sequence:
+        context = FrameContext(frame_id, timestamp, 640, 480)
+        commands = p.app.process_landmarks(HandFrame(context, () if hand is None else (hand,)))
+        assert all(command.context == context for command in commands)
+        batches.append(names(commands))
+        if hand is None:
+            assert not p.ui.canvas.pen_down
+            assert p.ui.predictions == ()
+    assert batches == [
+        ["pointer.move", "stroke.begin"],
+        ["pointer.move", "stroke.point"],
+        ["stroke.end"],
+        ["pointer.move", "stroke.begin"],
+    ]
+    assert p.ui.mapper.hand_id == "new-hand"
+    assert p.ui.pointer == pytest.approx((0.77, 0.8 - 0.4 / 0.75))
+    # The new track starts with its own filter state, with no connecting segment.
+    assert tuple(p.ui.canvas.pixels[53, 170]) == (245, 247, 250)
+
+
 def test_visible_unknown_is_distinct_from_absence_and_releases(tmp_path: Path) -> None:
     p = Pipeline(tmp_path)
     p.step(source_hand(Gesture.PINCH))
