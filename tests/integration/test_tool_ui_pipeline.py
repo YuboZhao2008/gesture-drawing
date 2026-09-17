@@ -35,7 +35,7 @@ def test_actual_ui_observer_switches_and_erases_at_multiple_rates(tmp_path: Path
 
     def hold(gesture: Gesture | None, seconds: float, x: float = 0.5) -> list[Command]:
         nonlocal frame_id
-        commands = []
+        commands: list[Command] = []
         for _ in range(ceil(seconds * fps)):
             context = FrameContext(frame_id, frame_id / fps, 640, 480)
             frame_id += 1
