@@ -248,6 +248,30 @@ def test_repeated_timestamps_do_not_advance_dwell() -> None:
     assert E.GESTURE_STARTED in kinds(stream.step(0.12))
 
 
+@pytest.mark.parametrize("gesture", [Gesture.POINT, Gesture.PINCH])
+def test_acquisition_boundary_emits_pointer_with_gesture_start(gesture: Gesture) -> None:
+    stream = Stream(delay=0.2)
+    stream.step(0.1, gesture)
+    assert not stream.step(0.2, gesture).pointer_events
+    # 0.1 + 0.2 rounds above 0.3; all eligibility checks must agree.
+    out = stream.step(0.3, gesture)
+    assert E.GESTURE_STARTED in kinds(out)
+    assert len(out.pointer_events) == 1
+
+
+def test_reacquisition_boundary_resumes_point_pointer_and_held_events() -> None:
+    stream = Stream(delay=0.2, grace=0.5)
+    for time in (0, 0.1, 0.2):
+        stream.step(time)
+    stream.step(0.3, None)
+    assert not stream.step(0.4).pointer_events
+    assert not stream.step(0.5).pointer_events
+    # Long cursor dropout adds a new gate at 0.4 + 0.2.
+    out = stream.step(0.6)
+    assert kinds(out) == [E.GESTURE_HELD]
+    assert len(out.pointer_events) == 1
+
+
 def test_pinch_exit_threshold_is_inclusive() -> None:
     stream = Stream(dwell=0)
     stream.step(0, Gesture.PINCH, distance=0.25)
