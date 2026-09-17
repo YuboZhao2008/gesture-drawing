@@ -187,3 +187,50 @@ def test_latest_cleanup_failure_is_reported(monkeypatch: pytest.MonkeyPatch) -> 
 def test_timing_summary() -> None:
     result = summarize_ms([0.01, 0.02, 0.03])
     assert result == pytest.approx({"mean": 20, "p50": 20, "p95": 29, "max": 30})
+
+
+@pytest.mark.parametrize("latest", [False, True])
+@pytest.mark.parametrize("during_open", [False, True])
+def test_camera_cleanup_preserves_primary_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    latest: bool,
+    during_open: bool,
+) -> None:
+    cv2 = pytest.importorskip("cv2")
+    capture = MagicMock()
+    capture.isOpened.return_value = True
+    primary = ValueError("original camera failure")
+    if during_open:
+        capture.set.side_effect = primary
+    else:
+        capture.read.side_effect = primary
+    capture.release.side_effect = RuntimeError("native release failure")
+    monkeypatch.setattr(cv2, "VideoCapture", lambda index: capture)
+    camera = OpenCVCamera(latest_frame=latest)
+    with pytest.raises(ValueError) as caught:
+        with camera:
+            camera.read()
+    assert caught.value is primary
+    assert caplog.text.count("Camera cleanup failed") == 1
+    assert "native release failure" in caplog.text
+    capture.release.assert_called_once()
+    assert camera._worker is None and camera._capture is None
+    camera.close()
+
+
+def test_camera_context_preserves_processing_failure(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    cv2 = pytest.importorskip("cv2")
+    capture = MagicMock()
+    capture.isOpened.return_value = True
+    capture.release.side_effect = RuntimeError("native release failure")
+    monkeypatch.setattr(cv2, "VideoCapture", lambda index: capture)
+    primary = ValueError("processing failed")
+    with pytest.raises(ValueError) as caught:
+        with OpenCVCamera():
+            raise primary
+    assert caught.value is primary
+    assert "Camera cleanup failed" in caplog.text
+    capture.release.assert_called_once()

@@ -206,10 +206,31 @@ def test_cli_help_and_validation(capsys: pytest.CaptureFixture[str]) -> None:
         runner.main(["--help"])
     assert help_exit.value.code == 0
     assert "--model" in capsys.readouterr().out
-    for args in (["--headless"], ["--max-frames", "0"]):
+    for args in (
+        ["--headless"],
+        ["--max-frames", "0"],
+        ["--camera-width", "0"],
+        ["--camera-height", "-1"],
+    ):
         with pytest.raises(SystemExit) as error:
             runner.main(args)
         assert error.value.code == 2
+
+
+@pytest.mark.parametrize("dimension", ["camera_width", "camera_height"])
+@pytest.mark.parametrize("value", [0, -1, True, 1.5])
+def test_invalid_dimensions_do_not_construct_resources(
+    monkeypatch: pytest.MonkeyPatch, dimension: str, value: int
+) -> None:
+    def unexpected_ui(**kwargs: object) -> None:
+        raise AssertionError("Invalid camera dimensions must fail before resource construction")
+
+    monkeypatch.setattr(demo, "DemoUI", unexpected_ui)
+    with pytest.raises(ValueError, match=f"{dimension} must be a positive integer"):
+        if dimension == "camera_width":
+            runner.run(AppConfig(), camera_width=value)
+        else:
+            runner.run(AppConfig(), camera_height=value)
 
 
 def test_cli_reports_startup_failure(tmp_path: Path) -> None:

@@ -50,6 +50,9 @@ def run(
         raise ValueError("max_frames must be positive")
     if headless and max_frames is None:
         raise ValueError("headless mode requires max_frames")
+    for name, dimension in (("camera_width", camera_width), ("camera_height", camera_height)):
+        if isinstance(dimension, bool) or not isinstance(dimension, int) or dimension < 1:
+            raise ValueError(f"{name} must be a positive integer")
 
     # Optional dependencies are loaded only after CLI argument parsing.
     import cv2
@@ -165,6 +168,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--headless requires --max-frames")
     if args.profile_warmup < 0:
         parser.error("--profile-warmup must be nonnegative")
+    if args.camera_width < 1 or args.camera_height < 1:
+        parser.error("--camera-width and --camera-height must be positive")
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     try:
         config = load_config(args.config) if args.config else AppConfig()

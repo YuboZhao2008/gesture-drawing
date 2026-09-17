@@ -2,14 +2,26 @@
 
 from __future__ import annotations
 
+import logging
 import math
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from threading import Condition, Thread
 from types import TracebackType
 from typing import Any
 
 from gesture_control.core.types import FrameContext
+
+LOGGER = logging.getLogger(__name__)
+
+
+def _cleanup_after_failure(action: Callable[[], None]) -> None:
+    """Preserve the active failure while still reporting failed native cleanup."""
+    try:
+        action()
+    except Exception:
+        LOGGER.exception("Camera cleanup failed")
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,7 +115,7 @@ class OpenCVCamera:
             if error is not None:
                 raise error
         except BaseException:
-            self.release()
+            _cleanup_after_failure(self.release)
             raise
         return self
 
@@ -132,7 +144,7 @@ class OpenCVCamera:
             # Windows, where monotonic() can quantize timestamps to ~16 ms.
             self._start = time.perf_counter()
         except BaseException:
-            capture.release()
+            _cleanup_after_failure(capture.release)
             raise
         self._capture = capture
         self._frame_id = 0
@@ -184,7 +196,7 @@ class OpenCVCamera:
                 error = self._error
                 frame, self._latest = self._latest, None
             if error is not None:
-                self.release()
+                _cleanup_after_failure(self.release)
                 raise error
             if frame is None:
                 raise RuntimeError("camera is not open")
@@ -202,7 +214,7 @@ class OpenCVCamera:
             image = validate_image(image)
             context = FrameContext(self._frame_id, timestamp, image.shape[1], image.shape[0])
         except BaseException:
-            self._release_capture()
+            _cleanup_after_failure(self._release_capture)
             raise
         self._frame_id += 1
         return CameraFrame(image, context)
@@ -240,4 +252,7 @@ class OpenCVCamera:
         exc: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        self.release()
+        if exc is None:
+            self.release()
+        else:
+            _cleanup_after_failure(self.release)

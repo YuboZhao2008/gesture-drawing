@@ -146,6 +146,8 @@ not automatically detect those changes.
 
 All automated tests use synthetic frames, geometry, or mocked backends; no physical
 webcam or display is required. Install all extras before running the complete suite.
+The [CI workflow](.github/workflows/ci.yml) runs these five checks on Windows and
+Linux with Python 3.12; it needs no downloaded model or camera access.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --basetemp=.pytest_tmp
@@ -203,6 +205,21 @@ Start one lead agent with [.agent/START_LEAD.md](.agent/START_LEAD.md).
 [AGENTS.md](AGENTS.md) defines repository policy; [.agent/README.md](.agent/README.md)
 explains delegation, isolated worktrees, recovery, and validated local integration.
 The lead owns the final result and coordinates specialists directly.
+
+## Project structure
+
+| Path | Purpose |
+| --- | --- |
+| `src/gesture_control/core/` | Validated values, configuration, protocols, performance metrics |
+| `src/gesture_control/vision/` | Camera capture, MediaPipe adapter, palm normalization |
+| `src/gesture_control/recognition/` | Geometric gesture classification |
+| `src/gesture_control/temporal/` | Dwell, pinch hysteresis, hand loss, One Euro filtering |
+| `src/gesture_control/ui/` | Calibration, drawing, camera overlay and controls |
+| `src/gesture_control/runner.py` | CLI, composition and resource lifecycle |
+| `tests/` | Synthetic unit and integration regressions |
+| `scripts/` | Deterministic benchmarks and synthetic UI previews |
+| `configs/`, `docs/` | Example settings, screenshots and validation reports |
+| `models/`, `recordings/`, `datasets/` | Ignored local assets; placeholders are tracked |
 
 ## Limitations
 
