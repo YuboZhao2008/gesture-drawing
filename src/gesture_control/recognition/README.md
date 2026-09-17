@@ -27,9 +27,11 @@ Pass the same recognition settings to both stages. Direct normalized inputs can 
 ## Recognition
 
 Pinch takes priority when thumb/index tip distance is at or below the enter
-threshold. Other poses use the minimum of normalized chain reach and PIP/DIP
-straightness. POINT requires index extension and three folded fingers; TWO_FINGER
-requires index/middle extension and ring/pinky folding. FIST requires the four
+threshold. Other poses combine normalized chain reach and PIP/DIP straightness.
+The angle score averages the two joints but can improve the weaker angle by at
+most 18 degrees, tolerating a modest isolated distal curl without masking a sharp
+bend. Reach still constrains folded-back fingers. POINT requires index extension
+and three folded fingers; TWO_FINGER requires index/middle extension and ring/pinky folding. FIST requires the four
 primary fingers folded. OPEN_PALM additionally requires a straight thumb. Thumb
 posture is otherwise unrestricted. Unmatched, ambiguous, or unusable geometry is
 UNKNOWN. Empty frames produce no predictions, never UNKNOWN or NONE predictions.
@@ -37,8 +39,8 @@ UNKNOWN. Empty frames produce no predictions, never UNKNOWN or NONE predictions.
 Confidence interpolates between the configurable floor and ceiling according to
 the weakest pose margin (or pinch closeness), then multiplies detector confidence.
 Below the shared confidence gate the label becomes UNKNOWN while retaining the
-score. Invalid chains or failed normalization produce zero confidence and no
-pinch distance. The recognizer is stateless; the temporal stage owns hysteresis.
+score. Duplicate joints, bone lengths at or below 5% of the longest bone in that
+finger, or failed normalization produce zero confidence and no pinch distance. The recognizer is stateless; the temporal stage owns hysteresis.
 
 | Setting | Default |
 | --- | --- |
@@ -185,3 +187,10 @@ of its first observed sample at all tested cadences, without overshoot. Pinch
 start/release now accepts after 40 ms of evidence, sampled at the next frame:
 66.7 ms at 30 Hz or 50 ms at 60 Hz, versus 133.3 ms before. Initial/reacquired
 strokes still respect acquisition protection. Hand absence ends a stroke immediately.
+
+## Classification robustness evaluation
+
+See [offline augmentation and evidence](../training/README.md) for the seedable
+synthetic corpus, original-vs-improved comparison, confusion metrics, rejection
+tests, limitations, and the decision to keep geometry instead of training a model
+on insufficiently diverse fixtures. Augmentation never runs in live inference.

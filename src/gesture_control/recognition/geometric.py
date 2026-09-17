@@ -74,12 +74,14 @@ class GeometricGestureRecognizer:
         gesture = Gesture.UNKNOWN
         quality = 0.0
         chains = [points[start : start + 4] for start in (1, 5, 9, 13, 17)]
-        # Collapsed chains are invalid geometry, not convincing folded fingers.
-        valid = all(
-            landmark_distance(a, b) > 1e-12
+        # A near-zero bone is just as unstable as a duplicate landmark. Relative
+        # lengths retain scale invariance and reject badly collapsed partial
+        # observations before they can manufacture pinch or folded evidence.
+        lengths = [
+            tuple(landmark_distance(a, b) for a, b in zip(chain, chain[1:], strict=False))
             for chain in chains
-            for a, b in zip(chain, chain[1:], strict=False)
-        )
+        ]
+        valid = all(min(bones) > max(1e-12, 0.05 * max(bones)) for bones in lengths)
         if not valid:
             return GesturePrediction(hand.source.hand_id, gesture, 0)
         scores = [finger_extension_score(*chain) for chain in chains]

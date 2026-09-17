@@ -26,12 +26,15 @@ def finger_extension_score(
 ) -> float:
     """Straightness in [0, 1], combining joint angles and chain reach.
 
-    Reach prevents a folded-back fingertip with one straight joint from looking
-    extended. Uses no image axes, handedness, or absolute bone lengths.
+    Reach prevents a folded-back fingertip from looking extended. Averaging the
+    two joint angles tolerates a modest isolated distal curl or noisy joint, but
+    can improve the weaker angle by at most 18 degrees: a sharp bend cannot be
+    hidden by one straight joint. No image axes or handedness are used.
     """
     length = landmark_distance(mcp, pip) + landmark_distance(pip, dip) + landmark_distance(dip, tip)
     if length <= 1e-12:
         return 0.0
     reach = landmark_distance(mcp, tip) / length
-    bend = min(joint_angle(mcp, pip, dip), joint_angle(pip, dip, tip)) / 180.0
+    angles = (joint_angle(mcp, pip, dip) / 180.0, joint_angle(pip, dip, tip) / 180.0)
+    bend = min(sum(angles) / 2, min(angles) + 0.1)
     return min(reach, bend)
