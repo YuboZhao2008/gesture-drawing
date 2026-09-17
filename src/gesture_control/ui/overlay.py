@@ -108,18 +108,18 @@ def fit_label(
 
 
 @lru_cache(maxsize=4)
-def _chrome(width: int, height: int) -> Image:
+def _chrome(width: int, height: int, camera_width: int) -> Image:
     """Immutable cached chrome. Dynamic renderers copy once and fill panel regions."""
-    total = width * 2 + 36
+    total = camera_width + width + 36
     panel: Image = np.full((height + 246, total, 3), BACKGROUND, dtype=np.uint8)
-    cv2.rectangle(panel, (12, 68), (width + 12, height + 100), SURFACE, -1)
-    cv2.rectangle(panel, (width + 24, 68), (total - 12, height + 100), SURFACE, -1)
+    cv2.rectangle(panel, (12, 68), (camera_width + 12, height + 100), SURFACE, -1)
+    cv2.rectangle(panel, (camera_width + 24, 68), (total - 12, height + 100), SURFACE, -1)
     cv2.line(panel, (12, 57), (total - 12, 57), BORDER, 1)
-    for x in (12, width + 24):
-        cv2.rectangle(panel, (x, 68), (x + width, height + 100), BORDER, 1)
+    for x, pane_width in ((12, camera_width), (camera_width + 24, width)):
+        cv2.rectangle(panel, (x, 68), (x + pane_width, height + 100), BORDER, 1)
     label(panel, "Gesture Control", (24, 36), scale=0.75)
     label(panel, "01 / CAMERA", (26, 89), color=MUTED, scale=0.4)
-    label(panel, "02 / DRAWING CANVAS", (width + 38, 89), color=MUTED, scale=0.4)
+    label(panel, "02 / DRAWING CANVAS", (camera_width + 38, 89), color=INK, scale=0.4)
     cv2.line(panel, (24, height + 197), (total - 24, height + 197), BORDER, 1)
     label(
         panel,
@@ -167,11 +167,12 @@ def render_layout(
     # Presentation has a readable minimum, independent of interaction resolution.
     # Tiny/narrow workspaces are letterboxed rather than shrinking the text chrome.
     width, height = max(640, canvas_width), max(240, canvas_height)
+    camera_width = 400
     if calibration_step is not None and not 0 <= calibration_step < len(CORNERS):
         calibration_step = len(CORNERS) - 1
         calibration_error = True
         status = "Calibration interrupted / C to restart"
-    panel = _chrome(width, height).copy()
+    panel = _chrome(width, height, camera_width).copy()
     total = panel.shape[1]
     tracking = frame is not None and bool(frame.hands)
     color = ACCENT if tracking else WARNING
@@ -180,9 +181,9 @@ def render_layout(
     label(panel, f"{fps:.0f} FPS", (total - 101, 35), color=MUTED)
 
     # Resize before drawing the skeleton, avoiding a full source-resolution copy.
-    scale = min(width / camera.shape[1], height / camera.shape[0])
+    scale = min(camera_width / camera.shape[1], height / camera.shape[0])
     rw, rh = max(1, round(camera.shape[1] * scale)), max(1, round(camera.shape[0] * scale))
-    ox, oy = 12 + (width - rw) // 2, 100 + (height - rh) // 2
+    ox, oy = 12 + (camera_width - rw) // 2, 100 + (height - rh) // 2
     preview = panel[oy : oy + rh, ox : ox + rw]
     if (rh, rw) == camera.shape[:2]:
         preview[:] = camera
@@ -201,10 +202,10 @@ def render_layout(
         cv2.circle(preview, target, 22, BACKGROUND, 5, cv2.LINE_AA)
         cv2.circle(preview, target, 21, WARNING, 2, cv2.LINE_AA)
         cv2.drawMarker(preview, target, WARNING, cv2.MARKER_CROSS, 14, 1, cv2.LINE_AA)
-        label(panel, "CALIBRATION", (width - 145, 89), color=WARNING, scale=0.4)
+        label(panel, "CALIBRATION", (camera_width - 110, 89), color=WARNING, scale=0.4)
     elif diagnostics:
-        label(panel, "DEBUG", (width - 62, 89), color=WARNING, scale=0.4)
-    canvas_x = width + 24 + (width - canvas_width) // 2
+        label(panel, "DEBUG", (camera_width - 62, 89), color=WARNING, scale=0.4)
+    canvas_x = camera_width + 24 + (width - canvas_width) // 2
     canvas_y = 100 + (height - canvas_height) // 2
     panel[canvas_y : canvas_y + canvas_height, canvas_x : canvas_x + canvas_width] = canvas
     workspace = workspace_size or (canvas_width, canvas_height)
@@ -229,14 +230,14 @@ def render_layout(
         )
         fit_label(
             panel,
-            "Point at a comfortable corner near the target. SPACE to capture.",
+            "Aim near target / SPACE to capture",
             (24, base + 64),
-            width - 20,
+            camera_width - 20,
         )
         for i in range(4):
             cv2.circle(
                 panel,
-                (width + 45 + i * 24, base + 29),
+                (camera_width + 45 + i * 24, base + 29),
                 5,
                 ACCENT if i < calibration_step else WARNING if i == calibration_step else BORDER,
                 -1,
@@ -245,7 +246,7 @@ def render_layout(
         fit_label(
             panel,
             status if calibration_error else "Drawing paused / C to restart",
-            (width + 38, base + 64),
+            (camera_width + 38, base + 64),
             width - 50,
             color=ERROR if calibration_error else MUTED,
         )
@@ -254,12 +255,12 @@ def render_layout(
         label(panel, gesture, (24, base + 36), color=INK, scale=0.7)
         label(panel, confidence, (24, base + 65), color=MUTED, scale=0.45)
         cv2.circle(
-            panel, (width + 42, base + 29), 4, ACCENT if pen_down else MUTED, -1, cv2.LINE_AA
+            panel, (camera_width + 42, base + 29), 4, ACCENT if pen_down else MUTED, -1, cv2.LINE_AA
         )
         label(
             panel,
             "Pencil / Drawing" if pen_down else "Pencil / Hover",
-            (width + 56, base + 35),
+            (camera_width + 56, base + 35),
             color=ACCENT if pen_down else INK,
             scale=0.5,
         )
@@ -273,7 +274,7 @@ def render_layout(
         fit_label(
             panel,
             status,
-            (width + 38, base + 65),
+            (camera_width + 38, base + 65),
             width - 50,
             color=ERROR if calibration_error else MUTED,
         )

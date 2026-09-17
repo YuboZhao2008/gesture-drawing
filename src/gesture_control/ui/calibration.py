@@ -103,6 +103,8 @@ class CalibrationSession:
     def capture(self, point: Point) -> Calibration | None:
         if len(self.points) >= len(CORNERS):
             raise ValueError("Calibration has too many corners; restart")
+        if point in self.points:
+            raise ValueError("Move to a different corner before capturing")
         candidate = (*self.points, point)
         if len(candidate) == 4:
             result = Calibration(candidate)

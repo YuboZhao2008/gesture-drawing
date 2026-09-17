@@ -3,8 +3,8 @@
 Install `python -m pip install -e ".[dev,ui]"`. UI runtime dependencies are NumPy
 and desktop OpenCV (`opencv-contrib-python`, shared with vision; not the headless build). Core remains unchanged.
 
-The single OpenCV window contains an aspect-preserving camera preview on the left,
-an internal pencil canvas on the right, and diagnostics/controls below. The overlay
+The single OpenCV window contains a secondary, aspect-preserving camera preview on
+the left, a larger pencil canvas on the right, and diagnostics/controls below. The overlay
 shows shared hand landmarks, canonical skeleton, bounding box, index tip, raw/stable
 gesture confidence, anatomical handedness, tracking state, measured presentation FPS,
 workspace size, tool state, and calibration status. The demo controls one stroke/hand
@@ -22,8 +22,8 @@ the actual temporal pointer at a comfortable position, not the target's fixed po
 Errors appear in coral; successful calibration returns to drawing with a green
 Calibrated status. C restarts the flow.
 
-Small workspaces use a minimum 640x240 presentation area per pane, with aspect-preserving
-preview scaling and letterboxing. This keeps headers, controls, and feedback readable
+The camera pane is 400 pixels wide; the canvas pane uses a minimum 640x240 presentation
+area, with aspect-preserving preview scaling and letterboxing. This keeps feedback readable
 even for a 1x1 or very narrow canvas; export and interaction dimensions remain unchanged.
 Debug cards are hidden during calibration so they cannot cover lower-corner targets.
 Fourth-point geometry and save failures leave the first three captures intact. A save
@@ -71,7 +71,7 @@ polls keys once, and returns whether to continue. `handle_key(code)` is independ
 testable. There is no constructor loop; the package runner owns scheduling.
 The event pump uses `cv2.pollKey()` when available, falling back to `waitKey(1)` on
 older builds. Capture paces the real loop; the UI adds no intentional key-poll delay.
-Large drawing canvases are resized only for presentation (up to 640x480 per pane),
+Large drawing canvases are resized only for presentation (up to 640x480),
 while pointer mapping and saved PNGs retain the configured canvas resolution.
 
 ## Commands and units
@@ -116,7 +116,9 @@ camera preview. Move the pointing fingertip to each comfortable workspace corner
 hold it still, and press SPACE. A four-point projective homography maps those corners
 to (0,0), (1,0), (1,1), (0,1). Validation rejects nonfinite/out-of-image coordinates,
 repeated points, wrong ordering, concavity, crossing edges, and tiny workspace area.
-Invalid fourth captures retain the first three points; press C to restart them all.
+Repeated captures are rejected immediately without advancing to the next corner.
+Invalid fourth captures retain the first three points; move and press SPACE to retry
+the fourth corner, or press C to restart them all.
 
 Calibration persists atomically to `recordings/calibration.json` (version 1) and
 reloads at construction. The previous valid transform remains available if a new
