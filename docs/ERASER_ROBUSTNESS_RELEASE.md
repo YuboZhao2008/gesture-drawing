@@ -132,7 +132,7 @@ added real DemoUI end-to-end tests at 15/30/60 Hz, corrected an old loss fixture
 reused a frame ID, and added a missing test annotation. Recognition needed no revision.
 No specialist implementation was rejected; ML was rejected as an architecture option.
 
-Final validation: 444 tests, no skips; Ruff passes; 88 files formatted; strict mypy
+Final validation: 444 tests, no skips; Ruff lint and formatting pass; strict mypy
 passes for 60 source files; pip check reports no broken requirements. All five gates
 are rerun on the final committed tree before main promotion. Synthetic normal,
 eraser and calibration previews were visually inspected; all presentation variants
