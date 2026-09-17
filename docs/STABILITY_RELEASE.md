@@ -67,7 +67,7 @@ combined runtime/interaction candidate.
 | --- | --- |
 | `-m pytest --basetemp=.pytest_tmp` | 318 passed; no skips |
 | `-m ruff check .` | Passed |
-| `-m ruff format --check .` | 75 files already formatted |
+| `-m ruff format --check .` | Passed |
 | `-m mypy` | Passed; 51 source files |
 | `-m pip check` | No broken requirements |
 
