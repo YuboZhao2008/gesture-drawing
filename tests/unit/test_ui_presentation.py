@@ -85,7 +85,7 @@ def test_render_buffers_and_cached_chrome_are_independent(tmp_path: Path) -> Non
 @pytest.mark.parametrize(
     "size", [(1, 1), (32, 24), (320, 240), (16, 1024), (1024, 16), (640, 480), (1920, 1080)]
 )
-@pytest.mark.parametrize("mode", ["normal", "debug", "calibration"])
+@pytest.mark.parametrize("mode", ["normal", "debug", "calibration", "eraser"])
 def test_small_layout_labels_fit_without_overlap(
     size: tuple[int, int],
     mode: str,
@@ -114,7 +114,10 @@ def test_small_layout_labels_fit_without_overlap(
     overlay._chrome.cache_clear()
     monkeypatch.setattr(overlay, "label", measured_label)
     ui = DemoUI(width=size[0], height=size[1], calibration_path=tmp_path / "none.json")
-    if mode == "debug":
+    if mode == "eraser":
+        ui.mapper.tool = "eraser"
+        ui.canvas.execute(Command(FrameContext(0, 0, 640, 480), "tool.select", {"tool": "eraser"}))
+    elif mode == "debug":
         ui.handle_key(ord("d"))
     elif mode == "calibration":
         ui.handle_key(ord("c"))

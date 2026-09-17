@@ -66,7 +66,7 @@ def main() -> None:
     ui.observe(frame, predictions, output)
     ui.fps = 52  # Illustrative fixture, not a performance measurement.
     ui.mapper.calibration = Calibration(((0.1, 0.1), (0.9, 0.1), (0.9, 0.9), (0.1, 0.9)))
-    ui.status = "Point to move / Pinch to draw"
+    ui.status = "Workspace ready"
     for i in range(240):
         t = i / 239
         x = round(100 + t * 440)
@@ -99,6 +99,19 @@ def main() -> None:
     ui.handle_key(ord("d"))
     save("debug")
     ui.handle_key(ord("d"))
+    ui.canvas.execute(Command(context, "stroke.end", hand_id=hand.hand_id))
+    ui.canvas.execute(Command(context, "tool.select", {"tool": "eraser"}, hand.hand_id))
+    for i, x in enumerate(range(290, 352, 4)):
+        ui.canvas.execute(
+            Command(
+                context,
+                "stroke.begin" if i == 0 else "stroke.point",
+                {"x_px": x, "y_px": 250},
+                hand.hand_id,
+            )
+        )
+    save("eraser")
+    ui.canvas.execute(Command(context, "stroke.end", hand_id=hand.hand_id))
     ui.handle_key(ord("c"))
     ui.pointer = (0.15, 0.15)
     ui.handle_key(32)
