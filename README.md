@@ -197,6 +197,13 @@ timestamps, skipped IDs between retained deliveries, and host acquisition-to-del
 age. It excludes capture warmup and retains at most 9000 deliveries. This host age
 excludes sensor/driver buffering and is not optical motion-to-photon latency.
 
+## Multi-agent development
+
+Start one lead agent with [.agent/START_LEAD.md](.agent/START_LEAD.md).
+[AGENTS.md](AGENTS.md) defines repository policy; [.agent/README.md](.agent/README.md)
+explains delegation, isolated worktrees, recovery, and validated local integration.
+The lead owns the final result and coordinates specialists directly.
+
 ## Limitations
 
 - One hand and one owned stroke at a time; no desktop mouse/keyboard automation.

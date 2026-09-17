@@ -1,0 +1,68 @@
+{
+  "task_id": "",
+  "objective": "",
+  "checkpoint_path": "",
+  "lead": {
+    "owner": "",
+    "session_id": "",
+    "last_checkpoint_at": null
+  },
+  "base_sha": "",
+  "main_sha_at_start": "",
+  "integration_branch": "",
+  "integration_worktree": "",
+  "final_branch": "main",
+  "status": "planning",
+  "pre_existing_work": [],
+  "tasks": {
+    "example_task": {
+      "objective": "",
+      "depends_on": [],
+      "owner": "example",
+      "owned_paths": [],
+      "interfaces": [],
+      "acceptance_criteria": [],
+      "validation_commands": [],
+      "status": "not_started"
+    }
+  },
+  "agents": {
+    "example": {
+      "role": "",
+      "session_id": "",
+      "task_ids": ["example_task"],
+      "branch": "",
+      "worktree": "",
+      "base_sha": "",
+      "owned_paths": [],
+      "status": "not_started",
+      "commit_sha": null,
+      "validation": {},
+      "worktree_clean": false,
+      "editing_stopped": false,
+      "reviewed_sha": null,
+      "reviewer": "",
+      "merge_approved": false,
+      "approved_sha": null,
+      "notes": ""
+    }
+  },
+  "resources": {
+    "device_windows": []
+  },
+  "integration": {
+    "merged": [],
+    "rejected": [],
+    "current_sha": null,
+    "current_step": "",
+    "validation": {}
+  },
+  "final": {
+    "sha": null,
+    "validation_complete": false,
+    "validation": {},
+    "worktree_clean": false,
+    "limitations": []
+  },
+  "next_action": ""
+}
