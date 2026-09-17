@@ -84,6 +84,7 @@ class DemoUI:
         self.frame, self.predictions, self.output = frame, predictions, output
         visible = {hand.hand_id for hand in frame.hands}
         self.mapper.visible_ids = visible
+        self.mapper.observe_evidence(frame, predictions)
         if self.mapper.hand_id is not None and self.mapper.hand_id not in visible:
             self.canvas.release()
         pointer = next((p for p in output.pointer_events if p.hand_id in visible), None)
@@ -107,7 +108,7 @@ class DemoUI:
         elif action is KeyAction.CLEAR:
             self.canvas.clear()
             self.mapper.reset()
-            self.status = "Canvas cleared / Point to move, pinch to draw"
+            self.status = "Canvas cleared"
             self.feedback_error = False
         elif action is KeyAction.CALIBRATE:
             self.canvas.release()
@@ -129,7 +130,7 @@ class DemoUI:
                     self.mapper.calibration = calibration
                     self.mapper.enabled = True
                     self.session = None
-                    self.status = "Calibrated: pinch to draw"
+                    self.status = "Calibrated: workspace ready"
                 else:
                     self.status = self.session.prompt
             except OSError:
@@ -177,6 +178,9 @@ class DemoUI:
             diagnostics=self.diagnostics,
             status=self.status,
             pen_down=self.canvas.pen_down,
+            tool=self.canvas.tool,
+            tool_switch_progress=self.mapper.tool_switch_progress,
+            tool_switch_cooldown_s=self.mapper.tool_switch_cooldown_remaining_s,
             corners=corners,
             workspace_size=(self.canvas.width, self.canvas.height),
             calibration_step=len(self.session.points) if self.session is not None else None,

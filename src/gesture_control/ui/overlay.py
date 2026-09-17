@@ -42,6 +42,7 @@ SURFACE = (32, 29, 25)
 BORDER = (57, 51, 43)
 WARNING = (99, 193, 242)
 ERROR = (126, 133, 244)
+ERASER = (232, 180, 139)
 
 
 def label(
@@ -156,6 +157,9 @@ def render_layout(
     diagnostics: bool,
     status: str,
     pen_down: bool,
+    tool: str = "pencil",
+    tool_switch_progress: float = 0.0,
+    tool_switch_cooldown_s: float = 0.0,
     corners: tuple[tuple[float, float], ...] = (),
     workspace_size: tuple[int, int] | None = None,
     calibration_step: int | None = None,
@@ -208,11 +212,27 @@ def render_layout(
     canvas_x = camera_width + 24 + (width - canvas_width) // 2
     canvas_y = 100 + (height - canvas_height) // 2
     panel[canvas_y : canvas_y + canvas_height, canvas_x : canvas_x + canvas_width] = canvas
+    tool_color = ERASER if tool == "eraser" else ACCENT
+    for index, name in enumerate(("pencil", "eraser")):
+        left = total - 310 + index * 82
+        active = tool == name
+        cv2.rectangle(panel, (left, 73), (left + 75, 95), tool_color if active else BORDER, 1)
+        label(
+            panel,
+            name.title(),
+            (left + 9, 89),
+            color=tool_color if active else MUTED,
+            scale=0.4,
+        )
     workspace = workspace_size or (canvas_width, canvas_height)
     label(panel, f"{workspace[0]} x {workspace[1]}", (total - 127, 89), color=MUTED, scale=0.4)
 
     if diagnostics and calibration_step is None and frame is not None and output is not None:
-        lines = diagnostic_lines(frame, predictions, output, fps)[:4]
+        lines = (
+            *diagnostic_lines(frame, predictions, output, fps)[:4],
+            f"TOOL {tool.upper()} / DWELL {tool_switch_progress:.0%}",
+            f"SWITCH COOLDOWN {tool_switch_cooldown_s:.1f}s",
+        )
         card_height = min(rh, 16 + len(lines) * 20)
         card = preview[rh - card_height : rh, : min(rw, 345)]
         card[:] = SURFACE
@@ -255,13 +275,20 @@ def render_layout(
         label(panel, gesture, (24, base + 36), color=INK, scale=0.7)
         label(panel, confidence, (24, base + 65), color=MUTED, scale=0.45)
         cv2.circle(
-            panel, (camera_width + 42, base + 29), 4, ACCENT if pen_down else MUTED, -1, cv2.LINE_AA
+            panel,
+            (camera_width + 42, base + 29),
+            4,
+            tool_color if pen_down else MUTED,
+            -1,
+            cv2.LINE_AA,
         )
         label(
             panel,
-            "Pencil / Drawing" if pen_down else "Pencil / Hover",
+            f"{tool.title()} / {'Erasing' if tool == 'eraser' else 'Drawing'}"
+            if pen_down
+            else f"{tool.title()} / Hover",
             (camera_width + 56, base + 35),
-            color=ACCENT if pen_down else INK,
+            color=tool_color if pen_down else INK,
             scale=0.5,
         )
         label(
@@ -277,5 +304,28 @@ def render_layout(
             (camera_width + 38, base + 65),
             width - 50,
             color=ERROR if calibration_error else MUTED,
+        )
+        target = "Pencil" if tool == "eraser" else "Eraser"
+        if tool_switch_progress > 0:
+            hint = f"Hold two fingers for {target} / {tool_switch_progress:.0%}"
+            cv2.line(
+                panel,
+                (camera_width + 38, base + 94),
+                (camera_width + 38 + round((width - 52) * tool_switch_progress), base + 94),
+                tool_color,
+                2,
+            )
+        elif tool_switch_cooldown_s > 0:
+            hint = f"{tool.title()} selected / Lower two fingers before switching again"
+        else:
+            action = "erase" if tool == "eraser" else "draw"
+            hint = f"Pinch to {action} / Point to move / Hold two fingers to switch"
+        fit_label(
+            panel,
+            hint,
+            (camera_width + 38, base + 86),
+            width - 50,
+            color=tool_color if tool_switch_progress > 0 else MUTED,
+            scale=0.4,
         )
     return panel
