@@ -191,3 +191,34 @@ def test_tool_feedback_fits_small_workspace_and_preserves_calibration(
         assert any("two fingers" in text for text in texts)
     # Avoid leaving test-rendered chrome in the shared cache.
     overlay._chrome.cache_clear()
+
+
+def test_tool_release_hint_persists_after_cooldown(monkeypatch: pytest.MonkeyPatch) -> None:
+    labels: list[str] = []
+
+    def capture(
+        image: Image,
+        text: str,
+        position: tuple[int, int],
+        *,
+        color: tuple[int, int, int] = overlay.INK,
+        scale: float = 0.5,
+    ) -> None:
+        labels.append(text)
+
+    monkeypatch.setattr(overlay, "label", capture)
+    overlay.render_layout(
+        np.zeros((480, 640, 3), dtype=np.uint8),
+        np.zeros((480, 640, 3), dtype=np.uint8),
+        None,
+        (),
+        None,
+        fps=30,
+        diagnostics=False,
+        status="Ready",
+        pen_down=False,
+        tool="eraser",
+        tool_switch_release_required=True,
+    )
+    assert "Lower two fingers before switching again" in labels
+    assert not any("Hold two fingers to switch" in text for text in labels)

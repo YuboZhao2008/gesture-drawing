@@ -100,6 +100,7 @@ def main() -> None:
     save("debug")
     ui.handle_key(ord("d"))
     ui.canvas.execute(Command(context, "stroke.end", hand_id=hand.hand_id))
+    ui.mapper.tool = "eraser"  # Keep this direct adapter fixture consistent with mapping state.
     ui.canvas.execute(Command(context, "tool.select", {"tool": "eraser"}, hand.hand_id))
     for i, x in enumerate(range(290, 352, 4)):
         ui.canvas.execute(
