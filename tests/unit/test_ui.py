@@ -1,5 +1,6 @@
 """UI logic and raster rendering tests; no camera or display is opened."""
 
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -203,9 +204,12 @@ def test_ui_observation_render_and_cleanup(
     rendered = ui.render(image)
     assert rendered.shape == (726, 1076, 3)
     assert not image.any()
-    ui.observe(HandFrame(context), (), TemporalOutput(context))
+    missing_context = replace(
+        context, frame_id=context.frame_id + 1, timestamp_s=context.timestamp_s + 0.05
+    )
+    ui.observe(HandFrame(missing_context), (), TemporalOutput(missing_context))
     assert not ui.canvas.pen_down
-    assert [c.name for c in ui.mapper.map(TemporalOutput(context))] == ["stroke.end"]
+    assert [c.name for c in ui.mapper.map(TemporalOutput(missing_context))] == ["stroke.end"]
     ui.handle_key(ord("c"))
     assert not ui.mapper.enabled
     for point in UNIT_CORNERS:
