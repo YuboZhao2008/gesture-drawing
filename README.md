@@ -1,7 +1,7 @@
 # Gesture Control
 
 A Python webcam prototype that turns hand landmarks into stable gestures and an
-interactive drawing canvas. Point to move the cursor, pinch to draw, and calibrate
+interactive drawing canvas. Point to move the cursor, pinch to draw or erase, and calibrate
 a comfortable working area. Includes a live skeleton, raw/stable gesture diagnostics,
 four-corner calibration, and PNG export.
 
@@ -107,9 +107,10 @@ the original processing exception. Startup/runtime errors return a nonzero exit 
 | Gesture / observation | Behavior |
 | --- | --- |
 | POINT (index extended, other fingers folded) | Move cursor without drawing |
-| PINCH (thumb/index tips close) | Begin once, continue while active, end once on release |
+| PINCH (thumb/index tips close) | Draw or erase with the selected tool; release to stop |
 | OPEN_PALM | Neutral; stop an accepted drawing gesture |
-| FIST / TWO_FINGER | Recognized for diagnostics; no drawing action |
+| TWO_FINGER (index and middle extended) | Hold deliberately to toggle Pencil / Eraser |
+| FIST | Neutral; recognized for diagnostics |
 | UNKNOWN | Non-actionable; ends prior gesture after dwell |
 | Hand missing | Release drawing immediately, even during tracking loss grace |
 
@@ -120,6 +121,20 @@ can tolerate up to 60 ms of visible classification noise. Uncertain pinch releas
 never adds drawing points. Missing hands release pinch immediately. Reappearance
 starts a new stroke after acceptance; no line connects across disappearance. Clear and
 calibration require a fresh pinch start, so release and pinch again before drawing.
+
+To erase, release the pinch and hold TWO_FINGER until the tool indicator changes to
+**Eraser**, then pinch and move over the ink. Repeat the same gesture to return to
+**Pencil**. The palette shows the active tool, hold progress, and switch feedback.
+Selection requires 0.65 seconds of continuous confident evidence from one hand.
+Holding the pose does not repeat the toggle: show a confident other gesture for
+0.18 seconds to rearm, and allow the 0.8-second cooldown to finish. Missing hands,
+uncertain poses, changed track IDs, and observation gaps interrupt the hold.
+
+The eraser removes ink coverage and reveals the canvas background. Its circular
+cursor shows the erasing area, and consecutive points form a continuous path.
+Drawing and erasing use the same calibration and safe hand-loss release. Clear
+and calibration release the stroke while keeping the selected tool. The canvas
+remains a raster document; undo and retained stroke editing are not included.
 
 The default adaptive One Euro filter suppresses small stationary jitter and
 responds faster during movement. Tune `[smoothing]` in `configs/default.toml`:
@@ -238,7 +253,7 @@ The lead owns the final result and coordinates specialists directly.
 - The camera currently negotiates 30 FPS on the tested device. Driver delivery,
   exposure, inference, and scheduling can still create uneven frames. Shutdown
   waits for an in-progress native camera read; a hung driver can delay release.
-- No eraser, undo, brush dynamics, training pipeline, or packaged recording/replay UI.
+- No undo, brush dynamics, trained classifier, or packaged recording/replay UI.
 - Calibration and PNG exports are local generated files. `models/`, `datasets/`, and
   `recordings/` keep placeholders only. The three specialist `*-worktree/` directories
   are real Git worktrees and remain ignored and intact.

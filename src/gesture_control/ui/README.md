@@ -82,9 +82,10 @@ They can also be constructed separately with matching width/height.
 | Command | Parameters | Meaning |
 | --- | --- | --- |
 | `pointer.move` | integer `x_px`, `y_px`; required `hand_id` | Move cursor only |
-| `stroke.begin` | integer `x_px`, `y_px`; required `hand_id` | Start at this current pointer |
-| `stroke.point` | integer `x_px`, `y_px`; required `hand_id` | Extend owned stroke |
+| `stroke.begin` | integer `x_px`, `y_px`; required `hand_id` | Start selected Pencil/Eraser at this pointer |
+| `stroke.point` | integer `x_px`, `y_px`; required `hand_id` | Extend owned drawing/erasing stroke |
 | `stroke.end` | none; owning `hand_id`, or None for cleanup | Release, idempotently |
+| `tool.select` | `tool`: `pencil` or `eraser` | Release and select the active tool |
 | `canvas.clear` | none | Erase and release |
 
 Input PointerEvent x/y are **source-image normalized fractions**. Calibration maps
@@ -99,6 +100,25 @@ antialiased straight pencil line. PINCH_ENDED/HAND_LOST end an active stroke onc
 Generic pinch start/end events do not duplicate their companion events. POINT and
 OPEN_PALM do not start strokes. Another hand cannot move or end an owned stroke.
 Calling adapter.clear() externally must be paired with mapper.reset(); UI R does both.
+
+`DemoUI.observe` calls `DrawingMapper.observe_evidence(frame, predictions)` before
+mapping the matching temporal batch. Standalone users must do the same to enable
+gesture tool selection. Hold TWO_FINGER for 0.65 seconds with both observation and
+prediction confidence at least 0.80 to toggle tools. A gap over 0.15 seconds, missing
+hand, changed ID, or uncertain pose interrupts the hold. A held pose toggles only
+once; rearming requires 0.18 seconds of a confident other recognized gesture and
+a 0.8-second switch cooldown. Tool gestures never start strokes, and selection
+emits `stroke.end` before `tool.select` when a stroke was active.
+
+The tool palette shows Pencil/Eraser, progress, and selection feedback. PINCH draws
+or erases; POINT moves the corresponding cursor. Calibration is identical for both.
+Clear, calibration, and stream reset preserve tool selection but release strokes
+and cancel pending holds. The eraser radius is 3% of the smaller canvas dimension,
+rounded to pixels with a four-pixel minimum; its preview outline scales with the canvas.
+It removes a separate ink-coverage mask and restores the actual copied background,
+including custom nonuniform BGR backgrounds. Dirty-region compositing bounds update
+cost. PNG export remains the composited BGR image; transparent export and undo are
+not implemented, and no retained-stroke rewrite was needed.
 
 ## Calibration and controls
 
@@ -129,7 +149,7 @@ crop, or mirroring. Calibration is intentionally independent of preview window s
 
 No live camera/display validation is claimed by unit tests. Tests exercise raster
 rendering, geometry, persistence, commands, ownership, state transitions, safety,
-and controls without opening a window. No eraser, undo, or brush dynamics are included.
+and controls without opening a window. Undo and brush dynamics are not included.
 
 ## Visual verification and performance
 

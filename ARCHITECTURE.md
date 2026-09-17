@@ -148,9 +148,22 @@ and test its transition ordering against these conventions:
 Events describe hand semantics. They must never encode a drawing tool, mouse button,
 key binding, or application-specific action. Mappers and adapters agree on command
 names (for example, an eventual `canvas.*` namespace), parameter units, and schemas.
-The prototype `pointer.move`, `stroke.begin`, `stroke.point`, `stroke.end`, and
-`canvas.clear` catalog lives in [UI integration](src/gesture_control/ui/README.md).
+The prototype `pointer.move`, `stroke.begin`, `stroke.point`, `stroke.end`,
+`tool.select`, and `canvas.clear` catalog lives in [UI integration](src/gesture_control/ui/README.md).
 Unsupported adapter commands must raise.
+
+Tool selection belongs to the drawing mapper, separate from generic gesture events.
+The UI observer forwards the current observation and instantaneous predictions to
+the mapper before dispatch. A continuous confident TWO_FINGER hold selects the next
+tool; retained stable gesture state alone cannot authorize a switch. The mapper ends
+any stroke before `tool.select` and suppresses stroke creation during selection.
+PINCH companions operate the selected Pencil/Eraser tool through the same calibrated
+pointer path. Reset/clear cancel interaction state while preserving the selected tool.
+
+The canvas stores an ink-coverage mask separately from its copied background. Pencil
+adds coverage and eraser removes coverage; only the dirty rectangle is recomposited.
+The public BGR `pixels` image remains the composited export. This is a raster canvas,
+not a retained stroke history or an undo system.
 
 ## Configuration and extension rules
 
