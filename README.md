@@ -10,8 +10,8 @@ four-corner calibration, and PNG export.
 Canvas-focused OpenCV interface with a secondary camera preview, persistent skeleton,
 compact gesture/status footer,
 and optional advanced diagnostics. The screenshot uses synthetic observations;
-its displayed FPS is illustrative. See [calibration preview](docs/images/ui-calibration.png)
-and [debug preview](docs/images/ui-debug.png).
+its displayed FPS is illustrative. See [eraser preview](docs/images/ui-eraser.png),
+[calibration preview](docs/images/ui-calibration.png), and [debug preview](docs/images/ui-debug.png).
 
 ## Architecture
 
@@ -190,9 +190,15 @@ camera frames and renders in memory):
 ```
 
 For manual acceptance, verify skeleton acquisition, POINT cursor movement, PINCH
-start/continuation/release, disappearance and reappearance without a connecting line,
-four-corner calibration, D/R/S controls, and ESC exit. If camera 0 cannot open, check
+start/continuation/release, deliberate TWO_FINGER selection in both directions,
+continuous erasing, disappearance and reappearance without a connecting segment,
+four-corner calibration for both tools, D/R/S controls, and ESC exit. If camera 0 cannot open, check
 Windows camera permissions, close other camera apps, and select the correct index.
+
+The [classification augmentation framework](src/gesture_control/training/README.md)
+provides reproducible synthetic robustness and rejection checks. It augments
+gesture-classification test data, not the MediaPipe detector. The geometric
+classifier remains lightweight; no trained model or inference dependency was added.
 
 ## Performance measurement
 
@@ -202,12 +208,16 @@ The [final integration audit](docs/FINAL_INTEGRATION.md) records the subsequent
 capture-mode comparison. The [latest stability release](docs/STABILITY_RELEASE.md)
 records 318 passing tests, the current UI, new reliability fixes, fresh benchmarks,
 and remaining hardware acceptance.
+The [eraser and robustness release](docs/ERASER_ROBUSTNESS_RELEASE.md) records the
+latest feature design, 444 tests, synthetic classification comparison, timing,
+specialist revisions, and physical checks still needed.
 The [initial architecture review](PERFORMANCE.md) explains the measured bottlenecks.
 To collect stage timings locally without saving webcam images:
 
 ```powershell
 .\.venv\Scripts\python.exe -m gesture_control --max-frames 960 --profile-warmup 60 --profile recordings/performance.json
 .\.venv\Scripts\python.exe scripts/benchmark_pipeline.py --calibrated --diagnostics off --output recordings/synthetic-performance.json
+.\.venv\Scripts\python.exe scripts/benchmark_eraser.py --tool eraser --output recordings/eraser-performance.json
 ```
 
 Profiling is opt-in. Reports include capture, inference, recognition, temporal,
@@ -233,6 +243,7 @@ The lead owns the final result and coordinates specialists directly.
 | `src/gesture_control/core/` | Validated values, configuration, protocols, performance metrics |
 | `src/gesture_control/vision/` | Camera capture, MediaPipe adapter, palm normalization |
 | `src/gesture_control/recognition/` | Geometric gesture classification |
+| `src/gesture_control/training/` | Offline synthetic classification augmentation and evaluation |
 | `src/gesture_control/temporal/` | Dwell, pinch hysteresis, hand loss, One Euro filtering |
 | `src/gesture_control/ui/` | Calibration, drawing, camera overlay and controls |
 | `src/gesture_control/runner.py` | CLI, composition and resource lifecycle |

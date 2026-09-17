@@ -1,0 +1,318 @@
+{
+  "schema_version": 1,
+  "warmup_frames": 30,
+  "measured_frames": 300,
+  "retained_frames": 300,
+  "failed_frames": 0,
+  "effective_fps": 29.955579769427306,
+  "window_elapsed_s": 10.0148287,
+  "frames_over_33_333_ms": 178,
+  "stages": {
+    "canvas_render": {
+      "mean_ms": 0.9953483333333333,
+      "p50_ms": 0.9901,
+      "p95_ms": 1.349,
+      "p99_ms": 1.466,
+      "max_ms": 4.9032,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "capture": {
+      "mean_ms": 20.508952,
+      "p50_ms": 23.2809,
+      "p95_ms": 41.0082,
+      "p99_ms": 52.4849,
+      "max_ms": 55.2042,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "color_conversion": {
+      "mean_ms": 0.060595333333333334,
+      "p50_ms": 0.0577,
+      "p95_ms": 0.0937,
+      "p99_ms": 0.1318,
+      "max_ms": 0.2259,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "detection": {
+      "mean_ms": 9.584139666666667,
+      "p50_ms": 9.3569,
+      "p95_ms": 16.5737,
+      "p99_ms": 17.2994,
+      "max_ms": 17.856,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "drawing": {
+      "mean_ms": 0.001932,
+      "p50_ms": 0.0,
+      "p95_ms": 0.0219,
+      "p99_ms": 0.0275,
+      "max_ms": 0.0307,
+      "active_frames": 26,
+      "calls": 50
+    },
+    "frame": {
+      "mean_ms": 33.379113,
+      "p50_ms": 35.5198,
+      "p95_ms": 54.7953,
+      "p99_ms": 65.6557,
+      "max_ms": 70.635,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "imshow": {
+      "mean_ms": 0.21354333333333334,
+      "p50_ms": 0.1979,
+      "p95_ms": 0.2872,
+      "p99_ms": 0.4095,
+      "max_ms": 0.4332,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "inference": {
+      "mean_ms": 9.300140666666666,
+      "p50_ms": 9.0998,
+      "p95_ms": 16.3302,
+      "p99_ms": 16.9484,
+      "max_ms": 17.53,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "key_handler": {
+      "mean_ms": 0.004241333333333333,
+      "p50_ms": 0.0041,
+      "p95_ms": 0.0052,
+      "p99_ms": 0.0074,
+      "max_ms": 0.0094,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "layout": {
+      "mean_ms": 1.1874773333333333,
+      "p50_ms": 1.1271,
+      "p95_ms": 1.5782,
+      "p99_ms": 1.8494,
+      "max_ms": 5.049,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "mapping": {
+      "mean_ms": 0.003625333333333333,
+      "p50_ms": 0.0026,
+      "p95_ms": 0.0122,
+      "p99_ms": 0.014,
+      "max_ms": 0.022,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "normalization": {
+      "mean_ms": 0.022828,
+      "p50_ms": 0.0,
+      "p95_ms": 0.0534,
+      "p99_ms": 0.0965,
+      "max_ms": 0.6149,
+      "active_frames": 128,
+      "calls": 128
+    },
+    "observation": {
+      "mean_ms": 0.006124999999999999,
+      "p50_ms": 0.0059,
+      "p95_ms": 0.0082,
+      "p99_ms": 0.0105,
+      "max_ms": 0.0129,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "poll_key": {
+      "mean_ms": 0.6141553333333334,
+      "p50_ms": 0.591,
+      "p95_ms": 0.7478,
+      "p99_ms": 0.9687,
+      "max_ms": 1.3355,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "present": {
+      "mean_ms": 3.153166333333333,
+      "p50_ms": 3.1094,
+      "p95_ms": 3.7904,
+      "p99_ms": 4.2742,
+      "max_ms": 7.947,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "recognition": {
+      "mean_ms": 0.04422266666666667,
+      "p50_ms": 0.0015,
+      "p95_ms": 0.1025,
+      "p99_ms": 0.1845,
+      "max_ms": 0.6657,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "render": {
+      "mean_ms": 2.2069706666666664,
+      "p50_ms": 2.1947,
+      "p95_ms": 2.8001,
+      "p99_ms": 3.1622,
+      "max_ms": 6.4166,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "resize": {
+      "mean_ms": 1.5054783333333335,
+      "p50_ms": 1.4911,
+      "p95_ms": 1.944,
+      "p99_ms": 2.3985,
+      "max_ms": 5.3546,
+      "active_frames": 300,
+      "calls": 600
+    },
+    "skeleton": {
+      "mean_ms": 0.03483233333333333,
+      "p50_ms": 0.0,
+      "p95_ms": 0.0867,
+      "p99_ms": 0.1275,
+      "max_ms": 0.2609,
+      "active_frames": 128,
+      "calls": 128
+    },
+    "temporal": {
+      "mean_ms": 0.021875,
+      "p50_ms": 0.0169,
+      "p95_ms": 0.0422,
+      "p99_ms": 0.0553,
+      "max_ms": 0.066,
+      "active_frames": 300,
+      "calls": 300
+    },
+    "text_raster": {
+      "mean_ms": 0.10741233333333333,
+      "p50_ms": 0.1043,
+      "p95_ms": 0.1365,
+      "p99_ms": 0.1729,
+      "max_ms": 0.2514,
+      "active_frames": 300,
+      "calls": 2400
+    },
+    "window_poll": {
+      "mean_ms": 0.005758666666666667,
+      "p50_ms": 0.0056,
+      "p95_ms": 0.0072,
+      "p99_ms": 0.0095,
+      "max_ms": 0.0112,
+      "active_frames": 300,
+      "calls": 300
+    }
+  },
+  "metadata": {
+    "source_sha256": {
+      "__init__.py": "c1938bec9e1b98fdb3862ce38b510630c69ce4d0352a2da13f6ad79c3f2bf986",
+      "__main__.py": "56c559905f572d10e4eb71b6aa54f4465da82f0adf59e9c94afd4c4a3a212c05",
+      "app.py": "a30039d8902180f7978b7674c617119ade75b3586825bea1accade7caee0eee6",
+      "control\\__init__.py": "7ed0cdeba954fe04b2ac636745d31e38bc1eafb145e69c5eab316b107294d8ea",
+      "control\\adapters\\__init__.py": "4cd93eb1f93cd566070c4bca210f535c1b0c9e362cdb82788094a6d00d4e29de",
+      "core\\__init__.py": "6d052930fca591afb1ec0478f343bd438d83609718920f94363f681fe5633d46",
+      "core\\_validation.py": "6458a9953e29f79acbad5ef7a097a90fe2f2d92c6f5e614638521b9c90ff6e37",
+      "core\\config.py": "36a10c5166332830bfd65c1eafe55e9be3ea3eebb5fb6329ba00bf4dd47d6889",
+      "core\\events.py": "ca3efec6d19bd98678953c1d7f0f5b8b909d60dbac9c3b5ed581b8d32276e900",
+      "core\\performance.py": "895cfcc1ab9de280fe29eef34839c0d99914f9c9a2602e814ba6042bd8b1ded6",
+      "core\\protocols.py": "4811e35e8569e7d73e5279cb6e2b2fbcd531c408c0b9b1b1847fda1ba544262b",
+      "core\\types.py": "4f36fe52bfea35572134e35e441617fb0475e1d06a1e973546a47723472db323",
+      "profiling.py": "8a90569ec680c28aa4f9a8b066dcedf4844afe4e7298cf26cd598af0219f4d01",
+      "recognition\\__init__.py": "cdf1c0c6911abcf2192c8fd0db6648ad2fbd674fe31f1c0562a5e745bd3a89e4",
+      "recognition\\geometric.py": "542333bd7d6aad1f0fb2c02fba459a47e9a08243ed74620c3b91307665485e88",
+      "recognition\\geometry.py": "96dbd37e566c1019263147f1db7c8710bbf818688503db04f2001bd49c7ff13c",
+      "runner.py": "1f8cd5a8c4d86dce22756e909b9cd26d0addfce869674c9f5d5b8d07c48930f9",
+      "temporal\\__init__.py": "dfe599d0b72e0ab87ce8f1b48ad0e93cece85f3502da5249eeed91e728b8048d",
+      "temporal\\filtering.py": "9e29be3c4129235053f97f1fc4624a0c6d4351b4b29e85b1af94bd46a1cfeaac",
+      "temporal\\motion.py": "a562a3bbd7f78e7e92ca87b0bcd6337407e8b54d69e737b2132238878faf652e",
+      "temporal\\processor.py": "965100aa5916e8856ab2c395c7463b8df84172608e09e72acf79e1fc1cb97b8b",
+      "training\\__init__.py": "c416855586b4bf98a8396b9b8cde4fcffd6d26de52ad9791640df104f64a6b89",
+      "ui\\__init__.py": "d38fd2e249a5f370d42788aecb123aa01cc6dfff0ccbbf1d0ff5236ab8caac9f",
+      "ui\\calibration.py": "f94f190bec459fe590ced50f9f9b1c2fa3e2edf7bc766cfa725a7607cb79a67a",
+      "ui\\demo.py": "f478a6cf1647042d4f3ae36e2a9bf9f8adce47b146acb2fe68b021d467dd5c4b",
+      "ui\\drawing.py": "f835377d2cef805161af758a184dbc0602580bcecd2d8cb30492ed358e3c7b79",
+      "ui\\overlay.py": "6c6f77364eb4afad1bb6e2e3cc9215c27c3a99c56750dfe4d01aef2086893007",
+      "vision\\__init__.py": "b40b332c34d56b61a9a46dacffa42b72f0518ee57184d35bff22d5234f81954f",
+      "vision\\benchmark.py": "71f2a395c7800c650fb86e5cae9cc7303a0b64bc9850a3f7fbb1854f1fd9c033",
+      "vision\\camera.py": "95ef3e19486661b44897d7c8810dfba487f677d3c62d9e1a874b805122462a62",
+      "vision\\debug.py": "6f8622df04a701fd14cbe71df0c853d71905816b976d53142b531c8bbf4f9814",
+      "vision\\detector.py": "49fcb6ac547311e38fb4efe87ab27de9384f7b0b3d794fe790dfc92471059e34",
+      "vision\\geometry.py": "31b0ae408bf2c5395569c53ad2a03aec2eb0605575f93b5a21d3533f0eadd7e2",
+      "vision\\smoke.py": "39b0df2c7353d2bcf364dcd69ee9b0e70b68f0e9d9671ff7fa8439a58cf7e4a3"
+    },
+    "opencv_threads": 22,
+    "camera": {
+      "backend": "MSMF",
+      "width": 640.0,
+      "height": 480.0,
+      "fps": 30.0,
+      "buffer_size_accepted": false,
+      "buffer_size_readback": 1.0,
+      "latest_frame": true
+    },
+    "observations_including_warmup": {
+      "frames": 330,
+      "frames_with_hands": 128
+    },
+    "capture_delivery": {
+      "scope": "Last 9000 successful deliveries after capture warmup; may include a frame whose downstream processing failed. Skips exclude frames before the first retained delivery and after the last. Host timings exclude sensor/driver buffering.",
+      "retained_deliveries": 300,
+      "first_frame_id": 30,
+      "last_frame_id": 329,
+      "acquisition_interval_s": 9.983611899981042,
+      "acquisition_fps": 29.949080853249892,
+      "skipped_frame_ids": 0,
+      "host_acquisition_to_delivery_ms": {
+        "mean": 3.8409539998004525,
+        "p50": 0.12129999231547117,
+        "p95": 12.087200011592358
+      }
+    }
+  },
+  "environment": {
+    "python": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "dependencies": {
+      "numpy": "2.5.3",
+      "opencv-contrib-python": "4.14.0.94",
+      "mediapipe": "0.10.35"
+    },
+    "config": {
+      "camera": {
+        "index": 0,
+        "target_fps": 30.0,
+        "min_detection_confidence": 0.5
+      },
+      "recognition": {
+        "min_confidence": 0.7,
+        "pinch_enter_threshold": 0.25,
+        "pinch_exit_threshold": 0.35
+      },
+      "temporal": {
+        "gesture_dwell_s": 0.12,
+        "reacquisition_delay_s": 0.2,
+        "hand_loss_grace_s": 0.15,
+        "held_interval_s": 0.1
+      },
+      "smoothing": {
+        "enabled": true,
+        "alpha": 0.35,
+        "adaptive": true,
+        "min_cutoff": 1.5,
+        "beta": 20.0,
+        "derivative_cutoff": 1.0
+      },
+      "workspace": {
+        "width": 1920,
+        "height": 1080
+      },
+      "debug": false
+    },
+    "headless": false,
+    "model": "models\\hand_landmarker.task"
+  }
+}

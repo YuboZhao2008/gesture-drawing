@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "warmup_frames": 60,
+  "measured_frames": 900,
+  "retained_frames": 900,
+  "failed_frames": 0,
+  "effective_fps": 1307.6738661377854,
+  "window_elapsed_s": 0.688245,
+  "frames_over_33_333_ms": 0,
+  "stages": {
+    "canvas_commands": {
+      "mean_ms": 0.04263755555555556,
+      "p50_ms": 0.0402,
+      "p95_ms": 0.0616,
+      "p99_ms": 0.0867,
+      "max_ms": 0.4243,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "canvas_preview": {
+      "mean_ms": 0.713446888888889,
+      "p50_ms": 0.6738,
+      "p95_ms": 0.922,
+      "p99_ms": 1.5402,
+      "max_ms": 3.2919,
+      "active_frames": 900,
+      "calls": 900
+    },
+    "frame": {
+      "mean_ms": 0.7615296666666667,
+      "p50_ms": 0.7183,
+      "p95_ms": 0.9895,
+      "p99_ms": 1.6785,
+      "max_ms": 3.3468,
+      "active_frames": 900,
+      "calls": 900
+    }
+  },
+  "metadata": {},
+  "scenario": {
+    "tool": "pencil",
+    "workspace": [
+      1920,
+      1080
+    ],
+    "preview": [
+      640,
+      360
+    ],
+    "stroke_frames": 120,
+    "synthetic_commands": true,
+    "camera_inference_mapping_native_ui": false,
+    "python": "3.12.10",
+    "opencv": "4.14.0",
+    "numpy": "2.5.3"
+  }
+}
