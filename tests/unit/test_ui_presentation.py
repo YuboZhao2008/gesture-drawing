@@ -103,7 +103,7 @@ def test_small_layout_labels_fit_without_overlap(
         color: tuple[int, int, int] = overlay.INK,
         scale: float = 0.5,
     ) -> None:
-        if image.shape[1] >= 1316 and text:
+        if image.shape[1] >= 1076 and text:
             (w, h), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, scale, 1)
             x, y = position
             assert 0 <= x and x + w < image.shape[1], text
@@ -120,7 +120,7 @@ def test_small_layout_labels_fit_without_overlap(
         ui.handle_key(ord("c"))
     pixels = ui.canvas.pixels.copy()
     rendered = ui.render(np.zeros((480, 640, 3), dtype=np.uint8))
-    assert rendered.shape[1] >= 1316 and rendered.shape[0] >= 486
+    assert rendered.shape[1] >= 1076 and rendered.shape[0] >= 486
     for index, a in enumerate(boxes):
         for b in boxes[index + 1 :]:
             assert not (max(a[0], b[0]) < min(a[2], b[2]) and max(a[1], b[1]) < min(a[3], b[3])), (
@@ -267,3 +267,63 @@ def test_present_reports_elapsed_fps_and_sizes_window_only_once(
     assert ui.fps == pytest.approx(30)
     assert sizes == [(rendered.shape[1], rendered.shape[0])]
     ui.close()
+
+
+@pytest.mark.parametrize("count", [1, 2, 3])
+def test_repeated_calibration_capture_does_not_advance(count: int, tmp_path: Path) -> None:
+    ui = DemoUI(calibration_path=tmp_path / "calibration.json")
+    ui.handle_key(ord("c"))
+    for point in UNIT_CORNERS[:count]:
+        ui.pointer = point
+        ui.handle_key(32)
+    ui.handle_key(32)
+    assert ui.session is not None and ui.session.points == list(UNIT_CORNERS[:count])
+    assert ui.feedback_error and "SPACE to retry" in ui.status
+    assert not ui.mapper.enabled
+    for point in UNIT_CORNERS[count:]:
+        ui.pointer = point
+        ui.handle_key(32)
+    assert ui.session is None and ui.mapper.enabled and not ui.feedback_error
+
+
+def test_invalid_fourth_capture_preserves_saved_transform_and_retries(tmp_path: Path) -> None:
+    path = tmp_path / "calibration.json"
+    previous = Calibration(UNIT_CORNERS)
+    previous.save(path)
+    saved = path.read_bytes()
+    ui = DemoUI(calibration_path=path)
+    ui.handle_key(ord("c"))
+    for point in ((0.1, 0.1), (0.9, 0.1), (0.9, 0.9), (0.8, 0.2)):
+        ui.pointer = point
+        ui.handle_key(32)
+    assert ui.session is not None and len(ui.session.points) == 3
+    assert ui.mapper.calibration == previous and not ui.mapper.enabled
+    assert path.read_bytes() == saved
+    assert "SPACE to retry" in ui.status
+    ui.pointer = (0.1, 0.9)
+    ui.handle_key(32)
+    assert ui.session is None and ui.mapper.enabled
+    assert Calibration.load(path) == ui.mapper.calibration != previous
+
+
+def test_camera_is_secondary_and_canvas_pixels_are_preserved(tmp_path: Path) -> None:
+    ui = DemoUI(calibration_path=tmp_path / "none.json")
+    camera = np.full((480, 640, 3), (40, 50, 60), dtype=np.uint8)
+    camera[100:300, 200:500] = (90, 100, 110)
+    rendered = ui.render(camera)
+    # Camera is aspect-preserving at 400x300; the paper remains 640x480.
+    expected = cv2.resize(camera, (400, 300), interpolation=cv2.INTER_AREA)
+    assert np.array_equal(rendered[190:490, 12:412], expected)
+    assert np.array_equal(rendered[100:580, 424:1064], ui.canvas.pixels)
+
+
+def test_save_exports_paper_without_cursor(tmp_path: Path, context: FrameContext) -> None:
+    path = tmp_path / "drawing.png"
+    ui = DemoUI(calibration_path=tmp_path / "none.json", drawing_path=path)
+    ui.canvas.execute(Command(context, "stroke.begin", {"x_px": 30, "y_px": 40}, "hand"))
+    ui.canvas.execute(Command(context, "stroke.point", {"x_px": 80, "y_px": 90}, "hand"))
+    ui.handle_key(ord("s"))
+    assert not ui.feedback_error
+    saved = cv2.imread(str(path))
+    assert saved is not None and np.array_equal(saved, ui.canvas.pixels)
+    assert ui.canvas.pen_down

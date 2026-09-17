@@ -227,7 +227,9 @@ def test_large_workspace_display_preserves_pointer_and_export_resolution(tmp_pat
     context = FrameContext(0, 0, 640, 480)
     ui.canvas.execute(Command(context, "pointer.move", {"x_px": 959, "y_px": 539}, "test-hand"))
     rendered = ui.render(np.zeros((480, 640, 3), dtype=np.uint8))
-    assert rendered.shape == (606, 1316, 3)
+    assert rendered.shape == (606, 1076, 3)
+    # The 400px camera pane leaves the 640x360 canvas preview at x=424.
+    assert np.array_equal(rendered[100:460, 424:1064], ui.canvas.render((640, 360)))
     assert ui.canvas.cursor == (959, 539)
     ui.handle_key(ord("s"))
     saved = cv2.imread(str(tmp_path / "drawing.png"))

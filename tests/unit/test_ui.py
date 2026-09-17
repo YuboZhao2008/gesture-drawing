@@ -201,7 +201,7 @@ def test_ui_observation_render_and_cleanup(
     assert ui.canvas.pen_down
     image = np.zeros((480, 640, 3), dtype=np.uint8)
     rendered = ui.render(image)
-    assert rendered.shape == (726, 1316, 3)
+    assert rendered.shape == (726, 1076, 3)
     assert not image.any()
     ui.observe(HandFrame(context), (), TemporalOutput(context))
     assert not ui.canvas.pen_down

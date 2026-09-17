@@ -136,7 +136,7 @@ class DemoUI:
                 self.status = "Save failed / SPACE to retry / C to restart"
                 self.feedback_error = True
             except ValueError:
-                self.status = "Invalid corners / C to restart calibration"
+                self.status = "Corner rejected / Move, SPACE to retry / C to restart"
                 self.feedback_error = True
         elif action is KeyAction.SAVE:
             try:
