@@ -91,6 +91,23 @@ def test_deliberate_enter_exit_and_held_gesture_never_repeats() -> None:
     assert session.canvas.tool == "pencil"
 
 
+def test_selection_clears_progress_and_release_prompt_outlasts_cooldown() -> None:
+    session = Interaction()
+    assert not session.mapper.tool_switch_release_required
+    session.hold(0, Gesture.TWO_FINGER, count=13)
+    assert session.mapper.tool_switch_progress > 0.9
+    assert names(session.step(0.65, Gesture.TWO_FINGER)) == ["tool.select"]
+    assert session.mapper.tool_switch_progress == 0
+    assert session.mapper.tool_switch_release_required
+    session.hold(0.7, Gesture.TWO_FINGER, count=30)
+    assert session.mapper.tool_switch_cooldown_remaining_s == 0
+    assert session.mapper.tool_switch_release_required
+    assert session.mapper.tool_switch_progress == 0
+    session.hold(2.2, Gesture.POINT, count=5)
+    assert not session.mapper.tool_switch_release_required
+    assert session.mapper.tool_switch_progress == 0
+
+
 @pytest.mark.parametrize(
     "gesture", [Gesture.POINT, Gesture.FIST, Gesture.OPEN_PALM, Gesture.UNKNOWN]
 )
