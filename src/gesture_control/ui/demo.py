@@ -181,6 +181,7 @@ class DemoUI:
             tool=self.canvas.tool,
             tool_switch_progress=self.mapper.tool_switch_progress,
             tool_switch_cooldown_s=self.mapper.tool_switch_cooldown_remaining_s,
+            tool_switch_release_required=self.mapper.tool_switch_release_required,
             corners=corners,
             workspace_size=(self.canvas.width, self.canvas.height),
             calibration_step=len(self.session.points) if self.session is not None else None,

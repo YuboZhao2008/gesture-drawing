@@ -160,6 +160,7 @@ def render_layout(
     tool: str = "pencil",
     tool_switch_progress: float = 0.0,
     tool_switch_cooldown_s: float = 0.0,
+    tool_switch_release_required: bool = False,
     corners: tuple[tuple[float, float], ...] = (),
     workspace_size: tuple[int, int] | None = None,
     calibration_step: int | None = None,
@@ -305,9 +306,9 @@ def render_layout(
             width - 50,
             color=ERROR if calibration_error else MUTED,
         )
-        target = "Pencil" if tool == "eraser" else "Eraser"
+        target_tool = "Pencil" if tool == "eraser" else "Eraser"
         if tool_switch_progress > 0:
-            hint = f"Hold two fingers for {target} / {tool_switch_progress:.0%}"
+            hint = f"Hold two fingers for {target_tool} / {tool_switch_progress:.0%}"
             cv2.line(
                 panel,
                 (camera_width + 38, base + 94),
@@ -317,6 +318,8 @@ def render_layout(
             )
         elif tool_switch_cooldown_s > 0:
             hint = f"{tool.title()} selected / Lower two fingers before switching again"
+        elif tool_switch_release_required:
+            hint = "Lower two fingers before switching again"
         else:
             action = "erase" if tool == "eraser" else "draw"
             hint = f"Pinch to {action} / Point to move / Hold two fingers to switch"
