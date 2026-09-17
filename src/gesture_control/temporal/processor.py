@@ -214,7 +214,7 @@ class GestureTemporalProcessor:
         prediction: GesturePrediction,
         now: float,
     ) -> bool:
-        if now < track.eligible_at or hand.confidence < self.recognition.min_confidence:
+        if now + 1e-12 < track.eligible_at or hand.confidence < self.recognition.min_confidence:
             return False
         stable = track.stable.gesture
         if stable not in (Gesture.POINT, Gesture.PINCH):
@@ -277,7 +277,7 @@ class GestureTemporalProcessor:
         if (
             track.stable.gesture not in (Gesture.NONE, Gesture.UNKNOWN)
             and gesture == track.stable.gesture
-            and now >= track.eligible_at
+            and now + 1e-12 >= track.eligible_at
             and now - track.last_held + 1e-12 >= self.config.held_interval_s
         ):
             events.append(
