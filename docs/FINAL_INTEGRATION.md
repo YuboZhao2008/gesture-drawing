@@ -1,5 +1,8 @@
 # Final integration audit
 
+Historical September 16 audit. See the [September 17 stability release](STABILITY_RELEASE.md)
+for the current validated product and UI.
+
 Validated September 16, 2026, using the root project's `.venv\Scripts\python.exe`.
 The starting main was `2182536f5761a056e5e8c038e838fbda34f29c80`, clean. It already
 contained all specialist commits and the earlier integration fixes. The original

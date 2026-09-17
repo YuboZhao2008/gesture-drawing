@@ -7,7 +7,8 @@ four-corner calibration, and PNG export.
 
 ![Gesture Control interface, synthetic preview](docs/images/ui-normal.png)
 
-Dark OpenCV interface with a persistent skeleton, compact gesture/status footer,
+Canvas-focused OpenCV interface with a secondary camera preview, persistent skeleton,
+compact gesture/status footer,
 and optional advanced diagnostics. The screenshot uses synthetic observations;
 its displayed FPS is illustrative. See [calibration preview](docs/images/ui-calibration.png)
 and [debug preview](docs/images/ui-debug.png).
@@ -135,8 +136,10 @@ SPACE at each corner. These are positions in the unmirrored camera image, not
 coordinates of the preview window. A projective transform maps source-image
 fractions to workspace fractions, then the mapper clamps and rounds to canvas pixels.
 
-Calibration rejects crossed, repeated, tiny, or incorrectly ordered corners. Press
-C to restart. Drawing stays disabled until calibration completes. Successful
+Calibration rejects crossed, repeated, tiny, or incorrectly ordered corners.
+Repeated captures are rejected immediately. A rejected fourth corner keeps the
+first three captures: move and press SPACE to retry, or press C to restart.
+Drawing stays disabled until calibration completes. Successful
 calibration saves to `recordings/calibration.json` and reloads on the next launch.
 Without calibration, the whole image maps to the canvas. Recalibrate after changing
 camera pose, resolution/aspect ratio, crop, or orientation; saved calibration does
@@ -181,7 +184,9 @@ Windows camera permissions, close other camera apps, and select the correct inde
 The [integrated polish report](docs/POLISH_RELEASE.md) records before/after trials,
 validation, and the distinction between live no-hand timing and synthetic motion.
 The [final integration audit](docs/FINAL_INTEGRATION.md) records the subsequent
-capture-mode comparison, current validation, and remaining hardware acceptance.
+capture-mode comparison. The [latest stability release](docs/STABILITY_RELEASE.md)
+records 318 passing tests, the current UI, new reliability fixes, fresh benchmarks,
+and remaining hardware acceptance.
 The [initial architecture review](PERFORMANCE.md) explains the measured bottlenecks.
 To collect stage timings locally without saving webcam images:
 
