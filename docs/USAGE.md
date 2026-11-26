@@ -1,0 +1,230 @@
+# Gesture Drawing: usage and validation
+
+A Python webcam prototype that turns hand landmarks into stable gestures and an
+interactive drawing canvas. Point to move the cursor, pinch to draw or erase, and calibrate
+a comfortable working area. Includes a live skeleton, raw/stable gesture diagnostics,
+four-corner calibration, and PNG export.
+
+![Gesture Control interface, synthetic preview](images/ui-normal.png)
+
+Canvas-focused OpenCV interface with a secondary camera preview, persistent skeleton,
+compact gesture/status footer,
+and optional advanced diagnostics. The screenshot uses synthetic observations;
+its displayed FPS is illustrative. See [eraser preview](images/ui-eraser.png),
+[calibration preview](images/ui-calibration.png), and [debug preview](images/ui-debug.png).
+
+## Architecture
+
+```text
+OpenCVCamera -> MediaPipeHandDetector -> GeometricGestureRecognizer
+                                       (PalmNormalizer for classification)
+            -> GestureTemporalProcessor -> DrawingMapper -> DrawingCanvas
+                                                           -> UI presentation
+```
+
+`GestureControlApp` runs processing stages synchronously. A camera worker keeps
+one latest frame available without building a queue; rendering and key handling
+stay on the main thread. `runner.py` owns construction, controls, and shutdown.
+`ObservedTemporal` lets the UI observe the same frame/predictions without repeating
+recognition. Core contracts use only the
+standard library; vision and UI dependencies are optional extras.
+
+Frame timestamps drive dwell, pinch hysteresis, hand loss, and pointer smoothing.
+Track IDs and frame contexts propagate through the pipeline. No hand means empty
+observations and predictions; UNKNOWN means a visible, unrecognized hand.
+Palm-normalized coordinates are used only for classification. Pointer coordinates
+come from the source-image index fingertip, then map through calibration to canvas
+pixels. Preview resizing never changes interaction coordinates.
+
+See [shared contracts](../ARCHITECTURE.md), [vision setup and APIs](../src/gesture_control/vision/README.md),
+[recognition and temporal semantics](../src/gesture_control/recognition/README.md),
+and [UI integration and command schemas](../src/gesture_control/ui/README.md).
+
+## Installation
+
+Requires Python 3.12+, a webcam, and a desktop display for the interactive UI.
+From the repository root in PowerShell, create a venv if one does not exist:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev,vision,ui]"
+Invoke-WebRequest -Uri 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task' -OutFile models/hand_landmarker.task
+```
+
+Both extras use **opencv-contrib-python**, which satisfies MediaPipe and provides
+desktop `cv2`. Do not also install `opencv-python` or a headless OpenCV distribution
+in this venv: they share module files. The model is downloaded explicitly, kept
+locally, and ignored by Git. The app never downloads it automatically.
+On POSIX, use `.venv/bin/python` for the commands below.
+
+## Launch
+
+```powershell
+.\.venv\Scripts\python.exe -m gesture_control
+```
+
+Keep the Gesture Studio window focused for keyboard controls. Capture and preview
+are unmirrored. The default camera is index 0, requested at 640x480 and 30 FPS;
+actual capture size and timing come from the camera. The drawing surface defaults
+to 1920x1080, displayed at a smaller size without changing export resolution.
+
+```powershell
+.\.venv\Scripts\python.exe -m gesture_control --config configs/default.toml
+.\.venv\Scripts\python.exe -m gesture_control --help
+```
+
+`--model`, `--calibration`, and `--drawing` select file paths (relative to the current
+directory unless absolute). `--config` explicitly loads TOML/JSON overrides; without
+it the app uses built-in defaults matching `configs/default.toml`. Change
+`camera.index` for another webcam and `workspace.width/height` for canvas resolution.
+Unknown keys, invalid types, nonfinite values, and inconsistent thresholds fail early.
+Defaults are starting points for tuning, not measured accuracy recommendations.
+
+Normal mode keeps the skeleton visible and hides advanced diagnostics. Use D to
+toggle them, `--diagnostics` to start with them, or `--no-diagnostics` to override
+`debug = true` in a configuration file. `--camera-width` / `--camera-height` request
+capture dimensions; unsupported requests may negotiate a different mode.
+`--synchronous-camera` selects the original capture path for comparison or device
+troubleshooting. The default latest-frame worker favors fresh frames under load;
+its frame IDs can skip, and it does not make the camera's sensor run faster.
+
+ESC, window close, Ctrl+C, camera failure, and exceptions trigger cleanup. Active
+drawing, mapper state, temporal state, camera, detector, and UI windows each receive
+a cleanup attempt. Failures are logged and do not block remaining cleanup or replace
+the original processing exception. Startup/runtime errors return a nonzero exit code.
+
+## Controls and gestures
+
+| Key | Action |
+| --- | --- |
+| ESC | Release and quit |
+| C | Start/restart calibration; disable drawing |
+| SPACE | Capture the current pointing position for calibration |
+| D | Toggle advanced diagnostics, bounds, and landmark indices |
+| R | Clear canvas and release the stroke |
+| S | Save PNG to `recordings/drawing.png` (overwrites that path) |
+
+| Gesture / observation | Behavior |
+| --- | --- |
+| POINT (index extended, other fingers folded) | Move cursor without drawing |
+| PINCH (thumb/index tips close) | Draw or erase with the selected tool; release to stop |
+| OPEN_PALM | Neutral; stop an accepted drawing gesture |
+| TWO_FINGER (index and middle extended) | Hold deliberately to toggle Pencil / Eraser |
+| FIST | Neutral; recognized for diagnostics |
+| UNKNOWN | Non-actionable; ends prior gesture after dwell |
+| Hand missing | Release drawing immediately, even during tracking loss grace |
+
+Gesture starts normally require 0.12 s dwell and 0.2 s acquisition delay, running
+concurrently. PINCH start/release use a 40 ms dwell cap, accepted on the next
+observed frame; initial/new-track acquisition still applies. Established POINT
+can tolerate up to 60 ms of visible classification noise. Uncertain pinch release
+never adds drawing points. Missing hands release pinch immediately. Reappearance
+starts a new stroke after acceptance; no line connects across disappearance. Clear and
+calibration require a fresh pinch start, so release and pinch again before drawing.
+
+To erase, release the pinch and hold TWO_FINGER until the tool indicator changes to
+**Eraser**, then pinch and move over the ink. Repeat the same gesture to return to
+**Pencil**. The palette shows the active tool, hold progress, and switch feedback.
+Selection requires 0.65 seconds of continuous confident evidence from one hand.
+Holding the pose does not repeat the toggle: show a confident other gesture for
+0.18 seconds to rearm, and allow the 0.8-second cooldown to finish. Missing hands,
+uncertain poses, changed track IDs, and observation gaps interrupt the hold.
+
+The eraser removes ink coverage and reveals the canvas background. Its circular
+cursor shows the erasing area, and consecutive points form a continuous path.
+Drawing and erasing use the same calibration and safe hand-loss release. Clear
+and calibration release the stroke while keeping the selected tool. The canvas
+remains a raster document; undo and retained stroke editing are not included.
+
+The default adaptive One Euro filter suppresses small stationary jitter and
+responds faster during movement. Tune `[smoothing]` in `configs/default.toml`:
+lower `min_cutoff` for more stationary smoothing, or increase `beta` for less
+motion lag. Cutoffs use Hz and speed uses source-image fractions per second.
+Set `adaptive = false` for the legacy `alpha` filter, or `enabled = false` to
+bypass filtering. See the [deterministic motion comparison](../src/gesture_control/recognition/README.md#motion-tuning-and-measurements).
+
+## Calibration
+
+Press C, make POINT, then place the fingertip at each comfortable source-image
+corner: **top left, top right, bottom right, bottom left**. Hold still and press
+SPACE at each corner. These are positions in the unmirrored camera image, not
+coordinates of the preview window. A projective transform maps source-image
+fractions to workspace fractions, then the mapper clamps and rounds to canvas pixels.
+
+Calibration rejects crossed, repeated, tiny, or incorrectly ordered corners.
+Repeated captures are rejected immediately. A rejected fourth corner keeps the
+first three captures: move and press SPACE to retry, or press C to restart.
+Drawing stays disabled until calibration completes. Successful
+calibration saves to `recordings/calibration.json` and reloads on the next launch.
+Without calibration, the whole image maps to the canvas. Recalibrate after changing
+camera pose, resolution/aspect ratio, crop, or orientation; saved calibration does
+not automatically detect those changes.
+
+## Testing
+
+All automated tests use synthetic frames, geometry, or mocked backends; no physical
+webcam or display is required. Install all extras before running the complete suite.
+The [CI workflow](../.github/workflows/ci.yml) runs these five checks on Windows and
+Linux with Python 3.12; it needs no downloaded model or camera access.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest --basetemp=.pytest_tmp
+.\.venv\Scripts\python.exe -m ruff check .
+.\.venv\Scripts\python.exe -m ruff format --check .
+.\.venv\Scripts\python.exe -m mypy
+.\.venv\Scripts\python.exe -m pip check
+```
+
+Integration tests cover real normalization/recognition/temporal processing, source
+pointer flow, ordered pinch commands, safe hand loss, UNKNOWN versus absence,
+calibration, and lifecycle failures including partial startup and failed cleanup.
+`process_landmarks(HandFrame)` supports deterministic landmark input; a recording
+codec/replay CLI is not implemented.
+
+Optional hardware checks (the first opens a window; the second still processes
+camera frames and renders in memory):
+
+```powershell
+.\.venv\Scripts\python.exe -m gesture_control --max-frames 30
+.\.venv\Scripts\python.exe -m gesture_control --headless --max-frames 30
+```
+
+For manual acceptance, verify skeleton acquisition, POINT cursor movement, PINCH
+start/continuation/release, deliberate TWO_FINGER selection in both directions,
+continuous erasing, disappearance and reappearance without a connecting segment,
+four-corner calibration for both tools, D/R/S controls, and ESC exit. If camera 0 cannot open, check
+Windows camera permissions, close other camera apps, and select the correct index.
+
+The [classification augmentation framework](../src/gesture_control/training/README.md)
+provides reproducible synthetic robustness and rejection checks. It augments
+gesture-classification test data, not the MediaPipe detector. The geometric
+classifier remains lightweight; no trained model or inference dependency was added.
+
+## Performance measurement
+
+The [integrated polish report](POLISH_RELEASE.md) records before/after trials,
+validation, and the distinction between live no-hand timing and synthetic motion.
+The [final integration audit](FINAL_INTEGRATION.md) records the subsequent
+capture-mode comparison. The [latest stability release](STABILITY_RELEASE.md)
+records 318 passing tests, the current UI, new reliability fixes, fresh benchmarks,
+and remaining hardware acceptance.
+The [eraser and robustness release](ERASER_ROBUSTNESS_RELEASE.md) records the
+latest feature design, 444 tests, synthetic classification comparison, timing,
+specialist revisions, and physical checks still needed.
+The [initial architecture review](../PERFORMANCE.md) explains the measured bottlenecks.
+To collect stage timings locally without saving webcam images:
+
+```powershell
+.\.venv\Scripts\python.exe -m gesture_control --max-frames 960 --profile-warmup 60 --profile recordings/performance.json
+.\.venv\Scripts\python.exe scripts/benchmark_pipeline.py --calibrated --diagnostics off --output recordings/synthetic-performance.json
+.\.venv\Scripts\python.exe scripts/benchmark_eraser.py --tool eraser --output recordings/eraser-performance.json
+```
+
+Profiling is opt-in. Reports include capture, inference, recognition, temporal,
+mapping, drawing, rendering, and native event-pump timings. Nested stage durations
+must not be added together. The synthetic benchmark excludes the camera, inference,
+and native window; its FPS is processing capacity, not achieved webcam FPS.
+The `metadata.capture_delivery` section reports acquisition FPS from frame IDs and
+timestamps, skipped IDs between retained deliveries, and host acquisition-to-delivery
+age. It excludes capture warmup and retains at most 9000 deliveries. This host age
+excludes sensor/driver buffering and is not optical motion-to-photon latency.

@@ -3,12 +3,15 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gesture-control"
+name = "gesture-drawing"
 version = "0.1.0"
-description = "Real-time hand gesture recognition, calibration, and drawing prototype"
+description = "Webcam-controlled drawing canvas with calibrated hand tracking, pencil, eraser, and PNG export"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
+
+[project.scripts]
+gesture-drawing = "gesture_control.runner:main"
 
 [project.optional-dependencies]
 vision = ["opencv-contrib-python>=4.11,<5", "mediapipe>=0.10.32,<0.11", "numpy>=2,<3"]
