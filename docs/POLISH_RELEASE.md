@@ -14,7 +14,7 @@ source-coordinate contracts were preserved.
 From PowerShell:
 
 ```powershell
-cd C:\Users\USER\OneDrive\Desktop\gesture-control
+# From the repository root:
 .\.venv\Scripts\python.exe -m gesture_control
 ```
 

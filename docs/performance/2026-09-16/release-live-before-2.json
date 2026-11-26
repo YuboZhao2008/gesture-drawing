@@ -272,6 +272,6 @@
       "debug": false
     },
     "headless": false,
-    "model": "C:\\Users\\USER\\OneDrive\\Desktop\\gesture-control\\models\\hand_landmarker.task"
+    "model": "models/hand_landmarker.task"
   }
 }
