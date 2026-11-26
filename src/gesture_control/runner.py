@@ -17,6 +17,7 @@ from .core.config import AppConfig, load_config
 from .core.performance import PerformanceMonitor
 
 LOGGER = logging.getLogger(__name__)
+_DEFAULT_MODEL = Path("models/hand_landmarker.task")
 
 
 def _cleanup(name: str, action: Callable[[], object]) -> None:
@@ -130,7 +131,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--config", type=Path, help="AppConfig TOML/JSON; otherwise built-in defaults"
     )
-    parser.add_argument("--model", type=Path, default=Path("models/hand_landmarker.task"))
+    parser.add_argument("--model", type=Path, default=_DEFAULT_MODEL)
     parser.add_argument("--calibration", type=Path, default=Path("recordings/calibration.json"))
     parser.add_argument("--drawing", type=Path, default=Path("recordings/drawing.png"))
     parser.add_argument("--max-frames", type=int, help="Exit after N frames (hardware smoke check)")
@@ -201,7 +202,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 },
                 "config": asdict(config),
                 "headless": args.headless,
-                "model": str(args.model),
+                "model": _DEFAULT_MODEL.as_posix()
+                if args.model == _DEFAULT_MODEL
+                else "custom-model",
             }
             args.profile.parent.mkdir(parents=True, exist_ok=True)
             args.profile.write_text(json.dumps(report, indent=2), encoding="utf-8")

@@ -59,3 +59,6 @@ historical design and validation notes.
 [CI](.github/workflows/ci.yml) uses synthetic and mocked inputs. It covers
 gesture state, stroke mapping, calibration and cleanup without a physical
 webcam. These checks do not measure real-world recognition accuracy or latency.
+
+Optional timing reports omit custom model paths. Review copied terminal logs for
+local file paths before sharing them.

@@ -275,12 +275,20 @@ def test_cli_forwards_capture_and_diagnostic_options(
     assert received["performance"] is None
 
 
+@pytest.mark.parametrize("custom_model", [False, True])
 def test_cli_forwards_profile_warmup_and_writes_report(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, custom_model: bool
 ) -> None:
     path = tmp_path / "profiles" / "run.json"
+    model_path = (
+        tmp_path / "sensitive-owner-profile" / "sensitive-model-name.task"
+        if custom_model
+        else Path("models/hand_landmarker.task")
+    )
+    model_args = ["--model", str(model_path)] if custom_model else []
 
     def fake_run(config: AppConfig, **kwargs: object) -> int:
+        assert kwargs["model_path"] == model_path
         monitor = kwargs["performance"]
         assert isinstance(monitor, PerformanceMonitor)
         assert monitor.warmup_frames == 2
@@ -291,8 +299,13 @@ def test_cli_forwards_profile_warmup_and_writes_report(
         return 3
 
     monkeypatch.setattr(runner, "run", fake_run)
-    assert runner.main(["--profile", str(path), "--profile-warmup", "2"]) == 0
-    report = json.loads(path.read_text(encoding="utf-8"))
+    assert runner.main(["--profile", str(path), "--profile-warmup", "2", *model_args]) == 0
+    report_text = path.read_text(encoding="utf-8")
+    assert "sensitive-owner-profile" not in report_text
+    assert "sensitive-model-name.task" not in report_text
+    report = json.loads(report_text)
+    expected_model = "custom-model" if custom_model else "models/hand_landmarker.task"
+    assert report["environment"]["model"] == expected_model
     assert report["retained_frames"] == 1
     assert report["warmup_frames"] == 2
     assert report["environment"]["config"]["smoothing"]["adaptive"] is True
